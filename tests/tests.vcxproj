@@ -106,6 +106,7 @@
     <ClCompile Include="test_titlebar_layout.cpp" />
     <ClCompile Include="test_resize_math.cpp" />
     <ClCompile Include="test_db_bootstrap.cpp" />
+    <ClCompile Include="test_notestore_content.cpp" />
     <ClCompile Include="..\src\app\AppPaths.cpp" />
     <ClCompile Include="..\src\app\DbBootstrap.cpp" />
     <ClCompile Include="..\src\ui\TitleBarLayout.cpp" />

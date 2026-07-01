@@ -17,6 +17,7 @@ public:
     bool updateNote(const Note& n, int64_t now);
     bool updateGeometry(int64_t id, RectI r, const std::string& monitorId);
     bool updateFlags(int64_t id, int opacity, bool pinned, bool rolledUp, bool visible);
+    bool updateContent(int64_t id, const std::vector<uint8_t>& blob, const std::string& plainText, int64_t now);
     bool deleteNote(int64_t id);
     std::optional<Note> getNote(int64_t id);
     std::vector<Note> allNotes();
