@@ -17,6 +17,10 @@ public:
     int64_t lastInsertRowId() const;
     sqlite3* handle() const { return db_; }
     void close();
+
+    int userVersion();
+    void setUserVersion(int v);
+    bool integrityOk();
 private:
     sqlite3* db_ = nullptr;
 };

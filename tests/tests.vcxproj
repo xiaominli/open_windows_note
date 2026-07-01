@@ -63,6 +63,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)src\third_party\sqlite;$(SolutionDir)src\third_party\json;$(SolutionDir)src\third_party\doctest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -81,6 +82,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -93,8 +95,10 @@
     <ClCompile Include="test_main.cpp" />
     <ClCompile Include="test_models.cpp" />
     <ClCompile Include="test_database.cpp" />
+    <ClCompile Include="test_migrations.cpp" />
     <ClCompile Include="..\src\data\Database.cpp" />
     <ClCompile Include="..\src\data\Statement.cpp" />
+    <ClCompile Include="..\src\data\Migrations.cpp" />
     <ClCompile Include="..\src\third_party\sqlite\sqlite3.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>

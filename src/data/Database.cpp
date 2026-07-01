@@ -1,4 +1,5 @@
 #include "data/Database.h"
+#include "data/Statement.h"
 #include "sqlite3.h"
 
 namespace own {
@@ -27,5 +28,17 @@ bool Database::exec(const std::string& sql, std::string* err) {
 }
 
 int64_t Database::lastInsertRowId() const { return sqlite3_last_insert_rowid(db_); }
+
+int Database::userVersion() {
+    Statement s(*this, "PRAGMA user_version;");
+    return s.step() ? (int)s.columnInt64(0) : 0;
+}
+void Database::setUserVersion(int v) {
+    std::string e; exec("PRAGMA user_version=" + std::to_string(v) + ";", &e);
+}
+bool Database::integrityOk() {
+    Statement s(*this, "PRAGMA integrity_check;");
+    return s.step() && s.columnText(0) == "ok";
+}
 
 } // namespace own
