@@ -106,10 +106,18 @@
     <ClCompile Include="..\src\data\NoteStore.cpp" />
     <ClCompile Include="..\src\data\SettingsStore.cpp" />
     <ClCompile Include="..\src\domain\Geometry.cpp" />
+    <ClCompile Include="..\src\domain\SearchText.cpp" />
+    <ClCompile Include="..\src\domain\ChecklistModel.cpp" />
+    <ClCompile Include="..\src\domain\ChecklistJson.cpp" />
+    <ClCompile Include="..\src\domain\StrokesJson.cpp" />
     <ClCompile Include="..\src\ui\TitleBarLayout.cpp" />
     <ClCompile Include="..\src\ui\ResizeMath.cpp" />
+    <ClCompile Include="..\src\ui\ChecklistLayout.cpp" />
+    <ClCompile Include="..\src\ui\DrawingMath.cpp" />
+    <ClCompile Include="..\src\ui\ContentLayout.cpp" />
     <ClCompile Include="..\src\ui\MonitorEnum.cpp" />
     <ClCompile Include="..\src\ui\NoteWindow.cpp" />
+    <ClCompile Include="..\src\ui\TextContentView.cpp" />
     <ClCompile Include="..\src\third_party\sqlite\sqlite3.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -122,6 +130,8 @@
     <ClInclude Include="..\src\app\DbBootstrap.h" />
     <ClInclude Include="..\src\ui\MonitorEnum.h" />
     <ClInclude Include="..\src\ui\NoteWindow.h" />
+    <ClInclude Include="..\src\ui\INoteContentView.h" />
+    <ClInclude Include="..\src\ui\TextContentView.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
