@@ -85,5 +85,28 @@ void CNoteListView::onTableScrollViewSortColumn(SWTableScrollViewWnd*, int col, 
 }
 int CNoteListView::onTableScrollViewAutoAdjustColumnWdidth(SWTableScrollViewWnd*, int) { return 0; }
 
-// Task 8/10 覆盖为真实菜单；此处占位。
-void CNoteListView::onContextMenu(int /*row*/) {}
+void CNoteListView::onContextMenu(int row) {
+    int64_t id = rowNoteId(row);
+    if (!id || !m_store) return;
+    CMenu menu; menu.CreatePopupMenu();
+    menu.AppendMenu(MF_STRING, 1, _T("\x6253\x5F00"));                    // 打开
+    menu.AppendMenu(MF_STRING, 2, _T("\x9690\x85CF\x8BE5\x4FBF\x7B7E")); // 隐藏该便签
+    menu.AppendMenu(MF_SEPARATOR, 0, _T(""));
+    menu.AppendMenu(MF_STRING, 3, _T("\x5220\x9664"));                    // 删除
+    CPoint pt; ::GetCursorPos(&pt);
+    int cmd = menu.TrackPopupMenu(TPM_RETURNCMD | TPM_LEFTALIGN, pt.x, pt.y, m_table);
+    if (cmd == 1) { if (m_host) m_host->openOrFocusNote(id); }
+    else if (cmd == 2) {
+        auto n = m_store->getNote(id);
+        if (n) {
+            m_store->updateFlags(id, n->opacity, n->pinned, n->rolledUp, false);
+            if (m_host) m_host->closeNoteWindow(id);
+            reload();
+        }
+    }
+    else if (cmd == 3) {
+        if (m_host) m_host->closeNoteWindow(id);
+        m_store->deleteNote(id);
+        reload();
+    }
+}
