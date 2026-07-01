@@ -133,6 +133,7 @@
   <ItemGroup>
     <ClInclude Include="..\src\app\NoteApp.h" />
     <ClInclude Include="..\src\app\AppHostWindow.h" />
+    <ClInclude Include="..\src\app\NoteWindowHost.h" />
     <ClInclude Include="..\src\app\AppPaths.h" />
     <ClInclude Include="..\src\app\DbBootstrap.h" />
     <ClInclude Include="..\src\ui\MonitorEnum.h" />

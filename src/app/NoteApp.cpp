@@ -80,6 +80,40 @@ void CNoteApp::createAndShowNote(const own::Note& seed) {
         m_notes.push_back(std::move(w));
 }
 
+CNoteWindow* CNoteApp::findNote(int64_t id) {
+    for (auto& w : m_notes) if (w && w->noteId() == id) return w.get();
+    return nullptr;
+}
+void CNoteApp::openOrFocusNote(int64_t id) {
+    if (CNoteWindow* w = findNote(id)) {
+        w->ShowWindow(SW_SHOW);
+        w->SetWindowPos(&CWnd::wndTopMost, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+        return;
+    }
+    auto full = m_store->getNote(id);
+    if (full) { full->visible = true; createAndShowNote(*full); }
+}
+void CNoteApp::closeNoteWindow(int64_t id) {
+    for (auto it = m_notes.begin(); it != m_notes.end(); ++it) {
+        if (*it && (*it)->noteId() == id) {
+            if ((*it)->GetSafeHwnd()) (*it)->DestroyWindow();
+            m_notes.erase(it);
+            return;
+        }
+    }
+}
+void CNoteApp::refreshNoteWindow(int64_t id) {
+    if (findNote(id)) { closeNoteWindow(id); openOrFocusNote(id); }
+}
+void CNoteApp::setAllNotesVisible(bool show) {
+    own::NoteQuery q; auto all = m_store->query(q);
+    for (const auto& n : all) {
+        m_store->updateFlags(n.id, n.opacity, n.pinned, n.rolledUp, show);
+        if (show) openOrFocusNote(n.id);
+        else closeNoteWindow(n.id);
+    }
+}
+
 int CNoteApp::ExitInstance() {
     m_notes.clear();
     if (m_gdiplusToken) Gdiplus::GdiplusShutdown(m_gdiplusToken);
