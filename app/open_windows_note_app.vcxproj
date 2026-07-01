@@ -97,10 +97,13 @@
   <ItemGroup>
     <ClCompile Include="..\src\app\NoteApp.cpp" />
     <ClCompile Include="..\src\app\AppHostWindow.cpp" />
+    <ClCompile Include="..\src\app\AppPaths.cpp" />
+    <ClCompile Include="..\src\app\AppPathsWin.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\app\NoteApp.h" />
     <ClInclude Include="..\src\app\AppHostWindow.h" />
+    <ClInclude Include="..\src\app\AppPaths.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
