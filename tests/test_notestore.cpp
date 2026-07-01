@@ -93,3 +93,53 @@ TEST_CASE("query filters by group") {
     auto r = store.query(q);
     REQUIRE(r.size() == 1); CHECK(r[0].groupId == 7);
 }
+
+TEST_CASE("upsertTag is idempotent by name") {
+    auto db = freshDb(); own::NoteStore s(db);
+    int64_t t1 = s.upsertTag("工作");
+    int64_t t2 = s.upsertTag("工作");
+    CHECK(t1 == t2);
+    CHECK(s.allTags().size() == 1);
+}
+
+TEST_CASE("tag attach/detach on note") {
+    auto db = freshDb(); own::NoteStore s(db);
+    int64_t nid = s.insertNote(own::Note{}, 1000);
+    int64_t tid = s.upsertTag("紧急");
+    REQUIRE(s.addTagToNote(nid, tid));
+    REQUIRE(s.tagsOfNote(nid).size() == 1);
+    REQUIRE(s.removeTagFromNote(nid, tid));
+    CHECK(s.tagsOfNote(nid).empty());
+}
+
+TEST_CASE("deleteGroup nulls note.group_id") {
+    auto db = freshDb(); own::NoteStore s(db);
+    own::Group g; g.name="项目A"; int64_t gid = s.upsertGroup(g);
+    own::Note n; n.groupId = gid; int64_t nid = s.insertNote(n, 1000);
+    REQUIRE(s.deleteGroup(gid));
+    CHECK(s.getNote(nid)->groupId == 0);
+}
+
+TEST_CASE("reminder crud and enabled filter") {
+    auto db = freshDb(); own::NoteStore s(db);
+    int64_t nid = s.insertNote(own::Note{}, 1000);
+    own::Reminder r; r.noteId = nid; r.dueAt = 5000; r.enabled = true;
+    int64_t rid = s.insertReminder(r);
+    CHECK(rid > 0);
+    own::Reminder r2; r2.noteId = nid; r2.dueAt = 6000; r2.enabled = false;
+    s.insertReminder(r2);
+    CHECK(s.remindersOfNote(nid).size() == 2);
+    CHECK(s.enabledReminders().size() == 1);
+}
+
+TEST_CASE("query filters by tag via note_tags join") {
+    auto db = freshDb(); own::NoteStore s(db);
+    int64_t n1 = s.insertNote(own::Note{}, 1000);
+    int64_t n2 = s.insertNote(own::Note{}, 2000);
+    int64_t t = s.upsertTag("紧急");
+    REQUIRE(s.addTagToNote(n1, t));
+    own::NoteQuery q; q.tagId = t;
+    auto r = s.query(q);
+    REQUIRE(r.size() == 1);
+    CHECK(r[0].id == n1);
+}

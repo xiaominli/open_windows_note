@@ -122,4 +122,93 @@ std::vector<Note> NoteStore::query(const NoteQuery& q) {
     return out;
 }
 
+// ---- groups ----
+int64_t NoteStore::upsertGroup(Group g) {
+    if (g.id > 0) {
+        Statement s(db_, "UPDATE groups SET name=?,order_idx=? WHERE id=?;");
+        s.bind(1,g.name); s.bind(2,(int64_t)g.orderIdx); s.bind(3,g.id); s.execDone();
+        return g.id;
+    }
+    Statement s(db_, "INSERT INTO groups(name,order_idx) VALUES(?,?);");
+    s.bind(1,g.name); s.bind(2,(int64_t)g.orderIdx); s.execDone();
+    return db_.lastInsertRowId();
+}
+std::vector<Group> NoteStore::allGroups() {
+    Statement s(db_, "SELECT id,name,order_idx FROM groups ORDER BY order_idx,id;");
+    std::vector<Group> out;
+    while (s.step()) out.push_back({ s.columnInt64(0), s.columnText(1), (int)s.columnInt64(2) });
+    return out;
+}
+bool NoteStore::deleteGroup(int64_t id) {
+    Transaction tx(db_);
+    { Statement s(db_, "UPDATE notes SET group_id=0 WHERE group_id=?;"); s.bind(1,id); s.execDone(); }
+    { Statement s(db_, "DELETE FROM groups WHERE id=?;"); s.bind(1,id); s.execDone(); }
+    tx.commit(); return true;
+}
+// ---- tags ----
+int64_t NoteStore::upsertTag(const std::string& name) {
+    { Statement s(db_, "SELECT id FROM tags WHERE name=?;"); s.bind(1,name);
+      if (s.step()) return s.columnInt64(0); }
+    Statement s(db_, "INSERT INTO tags(name) VALUES(?);"); s.bind(1,name); s.execDone();
+    return db_.lastInsertRowId();
+}
+std::vector<Tag> NoteStore::allTags() {
+    Statement s(db_, "SELECT id,name FROM tags ORDER BY name;");
+    std::vector<Tag> out; while (s.step()) out.push_back({ s.columnInt64(0), s.columnText(1) });
+    return out;
+}
+bool NoteStore::addTagToNote(int64_t noteId, int64_t tagId) {
+    Statement s(db_, "INSERT OR IGNORE INTO note_tags(note_id,tag_id) VALUES(?,?);");
+    s.bind(1,noteId); s.bind(2,tagId); s.execDone(); return true;
+}
+bool NoteStore::removeTagFromNote(int64_t noteId, int64_t tagId) {
+    Statement s(db_, "DELETE FROM note_tags WHERE note_id=? AND tag_id=?;");
+    s.bind(1,noteId); s.bind(2,tagId); s.execDone(); return true;
+}
+std::vector<Tag> NoteStore::tagsOfNote(int64_t noteId) {
+    Statement s(db_, "SELECT t.id,t.name FROM tags t JOIN note_tags nt ON nt.tag_id=t.id "
+                     "WHERE nt.note_id=? ORDER BY t.name;");
+    s.bind(1,noteId);
+    std::vector<Tag> out; while (s.step()) out.push_back({ s.columnInt64(0), s.columnText(1) });
+    return out;
+}
+// ---- reminders ----
+static void bindReminder(Statement& s, const Reminder& r, int base) {
+    s.bind(base+0, r.noteId); s.bind(base+1, r.dueAt);
+    s.bind(base+2,(int64_t)r.recurrence); s.bind(base+3,(int64_t)r.recurInterval);
+    s.bind(base+4, r.snoozeUntil); s.bind(base+5, r.soundPath);
+    s.bind(base+6,(int64_t)(r.enabled?1:0));
+}
+int64_t NoteStore::insertReminder(Reminder r) {
+    Statement s(db_, "INSERT INTO reminders(note_id,due_at,recurrence,recur_interval,"
+                     "snooze_until,sound_path,enabled) VALUES(?,?,?,?,?,?,?);");
+    bindReminder(s, r, 1); s.execDone(); return db_.lastInsertRowId();
+}
+bool NoteStore::updateReminder(const Reminder& r) {
+    Statement s(db_, "UPDATE reminders SET note_id=?,due_at=?,recurrence=?,recur_interval=?,"
+                     "snooze_until=?,sound_path=?,enabled=? WHERE id=?;");
+    bindReminder(s, r, 1); s.bind(8, r.id); s.execDone(); return true;
+}
+bool NoteStore::deleteReminder(int64_t id) {
+    Statement s(db_, "DELETE FROM reminders WHERE id=?;"); s.bind(1,id); s.execDone(); return true;
+}
+static Reminder readReminder(Statement& s) {
+    Reminder r;
+    r.id=s.columnInt64(0); r.noteId=s.columnInt64(1); r.dueAt=s.columnInt64(2);
+    r.recurrence=(Recurrence)s.columnInt64(3); r.recurInterval=(int)s.columnInt64(4);
+    r.snoozeUntil=s.columnInt64(5); r.soundPath=s.columnText(6); r.enabled=s.columnInt64(7)!=0;
+    return r;
+}
+std::vector<Reminder> NoteStore::remindersOfNote(int64_t noteId) {
+    Statement s(db_, "SELECT id,note_id,due_at,recurrence,recur_interval,snooze_until,"
+                     "sound_path,enabled FROM reminders WHERE note_id=? ORDER BY due_at;");
+    s.bind(1,noteId);
+    std::vector<Reminder> out; while (s.step()) out.push_back(readReminder(s)); return out;
+}
+std::vector<Reminder> NoteStore::enabledReminders() {
+    Statement s(db_, "SELECT id,note_id,due_at,recurrence,recur_interval,snooze_until,"
+                     "sound_path,enabled FROM reminders WHERE enabled=1 ORDER BY due_at;");
+    std::vector<Reminder> out; while (s.step()) out.push_back(readReminder(s)); return out;
+}
+
 } // namespace own
