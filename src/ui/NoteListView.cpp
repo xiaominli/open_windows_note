@@ -1,4 +1,5 @@
 #include "ui/NoteListView.h"
+#include "ui/TextPrompt.h"
 #include "app/NoteWindowHost.h"
 #include "data/NoteStore.h"
 #include <ctime>
@@ -10,6 +11,21 @@ static uint32_t typeMarkerColor(own::NoteType t) {
         case own::NoteType::Drawing:   return 0x30A030;
         default:                       return 0xE0C020;   // 富文本=黄
     }
+}
+// UTF-8(存储层) ↔ 宽字符(Unicode GDI/菜单) 转换。直接把 UTF-8 当 ANSI 会乱码。
+static CString u8ToWide(const std::string& s) {
+    if (s.empty()) return CString();
+    int n = ::MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), nullptr, 0);
+    CString w;
+    if (n > 0) { ::MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), w.GetBuffer(n), n); w.ReleaseBuffer(n); }
+    return w;
+}
+static std::string wideToU8(const CString& w) {
+    if (w.IsEmpty()) return std::string();
+    int n = ::WideCharToMultiByte(CP_UTF8, 0, w, w.GetLength(), nullptr, 0, nullptr, nullptr);
+    std::string s(n > 0 ? n : 0, '\0');
+    if (n > 0) ::WideCharToMultiByte(CP_UTF8, 0, w, w.GetLength(), &s[0], n, nullptr, nullptr);
+    return s;
 }
 void CNoteListView::Attach(SWTableScrollViewWnd* table, own::NoteStore* store, INoteWindowHost* host) {
     m_table = table; m_store = store; m_host = host;
@@ -68,7 +84,8 @@ void CNoteListView::onTableScrollViewDrawCell(HDC hdc, SWTableScrollViewWnd*, in
     else if (col == 3) txt = &r.tags; else if (col == 4) txt = &r.updated;
     if (!txt) return;
     CRect tr(rect.left + 6, rect.top, rect.right - 4, rect.bottom);
-    ::DrawTextA(hdc, txt->c_str(), (int)txt->size(), tr, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
+    CString wtxt = u8ToWide(*txt);
+    ::DrawTextW(hdc, wtxt, wtxt.GetLength(), tr, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
 }
 void CNoteListView::onTableScrollViewLeftMouseDblClick(SWTableScrollViewWnd*, int row, int) {
     int64_t id = rowNoteId(row);
@@ -88,25 +105,67 @@ int CNoteListView::onTableScrollViewAutoAdjustColumnWdidth(SWTableScrollViewWnd*
 void CNoteListView::onContextMenu(int row) {
     int64_t id = rowNoteId(row);
     if (!id || !m_store) return;
+    auto note = m_store->getNote(id);
+    if (!note) return;
+
     CMenu menu; menu.CreatePopupMenu();
     menu.AppendMenu(MF_STRING, 1, _T("\x6253\x5F00"));                    // 打开
     menu.AppendMenu(MF_STRING, 2, _T("\x9690\x85CF\x8BE5\x4FBF\x7B7E")); // 隐藏该便签
+
+    // 改分组 子菜单：无分组=100，现有=200+i，新建=199
+    CMenu grp; grp.CreatePopupMenu();
+    grp.AppendMenu(MF_STRING, 100, _T("\x65E0\x5206\x7EC4"));             // 无分组
+    auto groups = m_store->allGroups();
+    for (size_t i = 0; i < groups.size(); ++i)
+        grp.AppendMenu(MF_STRING, 200 + (UINT)i, u8ToWide(groups[i].name));
+    grp.AppendMenu(MF_SEPARATOR, 0, _T(""));
+    grp.AppendMenu(MF_STRING, 199, _T("\x65B0\x5EFA\x5206\x7EC4\x2026")); // 新建分组…
+    menu.AppendMenu(MF_POPUP, (UINT_PTR)grp.GetSafeHmenu(), _T("\x6539\x5206\x7EC4")); // 改分组
+
+    // 加标签 子菜单：现有=300+i，新建=299
+    CMenu tag; tag.CreatePopupMenu();
+    auto tags = m_store->allTags();
+    for (size_t i = 0; i < tags.size(); ++i)
+        tag.AppendMenu(MF_STRING, 300 + (UINT)i, u8ToWide(tags[i].name));
+    if (!tags.empty()) tag.AppendMenu(MF_SEPARATOR, 0, _T(""));
+    tag.AppendMenu(MF_STRING, 299, _T("\x65B0\x5EFA\x6807\x7B7E\x2026")); // 新建标签…
+    menu.AppendMenu(MF_POPUP, (UINT_PTR)tag.GetSafeHmenu(), _T("\x52A0\x6807\x7B7E")); // 加标签
+
     menu.AppendMenu(MF_SEPARATOR, 0, _T(""));
     menu.AppendMenu(MF_STRING, 3, _T("\x5220\x9664"));                    // 删除
+
     CPoint pt; ::GetCursorPos(&pt);
     int cmd = menu.TrackPopupMenu(TPM_RETURNCMD | TPM_LEFTALIGN, pt.x, pt.y, m_table);
+
     if (cmd == 1) { if (m_host) m_host->openOrFocusNote(id); }
     else if (cmd == 2) {
-        auto n = m_store->getNote(id);
-        if (n) {
-            m_store->updateFlags(id, n->opacity, n->pinned, n->rolledUp, false);
-            if (m_host) m_host->closeNoteWindow(id);
-            reload();
+        m_store->updateFlags(id, note->opacity, note->pinned, note->rolledUp, false);
+        if (m_host) m_host->closeNoteWindow(id);
+        reload();
+    }
+    else if (cmd == 3) { if (m_host) m_host->closeNoteWindow(id); m_store->deleteNote(id); reload(); }
+    else if (cmd == 100) { note->groupId = 0; m_store->updateNote(*note, note->updatedAt); reload(); }
+    else if (cmd >= 200 && cmd < 299) {
+        size_t i = (size_t)(cmd - 200);
+        if (i < groups.size()) { note->groupId = groups[i].id; m_store->updateNote(*note, note->updatedAt); reload(); }
+    }
+    else if (cmd == 199) {
+        CString name;
+        if (own_ui::promptText(m_table, _T("\x65B0\x5EFA\x5206\x7EC4"), name)) {
+            own::Group g; g.name = wideToU8(name);
+            int64_t gid = m_store->upsertGroup(g);
+            note->groupId = gid; m_store->updateNote(*note, note->updatedAt); reload();
         }
     }
-    else if (cmd == 3) {
-        if (m_host) m_host->closeNoteWindow(id);
-        m_store->deleteNote(id);
-        reload();
+    else if (cmd >= 300 && cmd < 399) {
+        size_t i = (size_t)(cmd - 300);
+        if (i < tags.size()) { m_store->addTagToNote(id, tags[i].id); reload(); }
+    }
+    else if (cmd == 299) {
+        CString name;
+        if (own_ui::promptText(m_table, _T("\x65B0\x5EFA\x6807\x7B7E"), name)) {
+            int64_t tid = m_store->upsertTag(wideToU8(name));
+            m_store->addTagToNote(id, tid); reload();
+        }
     }
 }
