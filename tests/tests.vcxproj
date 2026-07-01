@@ -108,6 +108,7 @@
     <ClCompile Include="test_db_bootstrap.cpp" />
     <ClCompile Include="test_notestore_content.cpp" />
     <ClCompile Include="test_search_text.cpp" />
+    <ClCompile Include="test_checklist_model.cpp" />
     <ClCompile Include="..\src\app\AppPaths.cpp" />
     <ClCompile Include="..\src\app\DbBootstrap.cpp" />
     <ClCompile Include="..\src\ui\TitleBarLayout.cpp" />
@@ -118,6 +119,7 @@
     <ClCompile Include="..\src\data\Migrations.cpp" />
     <ClCompile Include="..\src\data\NoteStore.cpp" />
     <ClCompile Include="..\src\domain\SearchText.cpp" />
+    <ClCompile Include="..\src\domain\ChecklistModel.cpp" />
     <ClCompile Include="..\src\domain\ChecklistJson.cpp" />
     <ClCompile Include="..\src\domain\StrokesJson.cpp" />
     <ClCompile Include="..\src\domain\ReminderRules.cpp" />
