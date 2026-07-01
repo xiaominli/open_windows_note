@@ -112,6 +112,8 @@
     <ClCompile Include="test_checklist_layout.cpp" />
     <ClCompile Include="test_drawing_math.cpp" />
     <ClCompile Include="test_content_layout.cpp" />
+    <ClCompile Include="test_note_list_format.cpp" />
+    <ClCompile Include="..\src\domain\NoteListFormat.cpp" />
     <ClCompile Include="..\src\app\AppPaths.cpp" />
     <ClCompile Include="..\src\app\DbBootstrap.cpp" />
     <ClCompile Include="..\src\ui\TitleBarLayout.cpp" />

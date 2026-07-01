@@ -110,6 +110,7 @@
     <ClCompile Include="..\src\domain\ChecklistModel.cpp" />
     <ClCompile Include="..\src\domain\ChecklistJson.cpp" />
     <ClCompile Include="..\src\domain\StrokesJson.cpp" />
+    <ClCompile Include="..\src\domain\NoteListFormat.cpp" />
     <ClCompile Include="..\src\ui\TitleBarLayout.cpp" />
     <ClCompile Include="..\src\ui\ResizeMath.cpp" />
     <ClCompile Include="..\src\ui\ChecklistLayout.cpp" />
