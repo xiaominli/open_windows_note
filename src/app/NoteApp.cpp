@@ -48,6 +48,12 @@ BOOL CNoteApp::InitInstance() {
         auto full = m_store->getNote(id);
         if (full) createAndShowNote(*full);
     };
+    m_host.onNewDrawing = [this]{
+        own::Note n; n.type = own::NoteType::Drawing; n.visible = true;
+        int64_t id = m_store->insertNote(n, (int64_t)time(nullptr));
+        auto full = m_store->getNote(id);
+        if (full) createAndShowNote(*full);
+    };
     m_host.onQuit = []{ ::PostQuitMessage(0); };
 
     if (!m_host.Create())
