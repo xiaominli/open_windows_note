@@ -111,12 +111,14 @@
     <ClCompile Include="test_checklist_model.cpp" />
     <ClCompile Include="test_checklist_layout.cpp" />
     <ClCompile Include="test_drawing_math.cpp" />
+    <ClCompile Include="test_content_layout.cpp" />
     <ClCompile Include="..\src\app\AppPaths.cpp" />
     <ClCompile Include="..\src\app\DbBootstrap.cpp" />
     <ClCompile Include="..\src\ui\TitleBarLayout.cpp" />
     <ClCompile Include="..\src\ui\ResizeMath.cpp" />
     <ClCompile Include="..\src\ui\ChecklistLayout.cpp" />
     <ClCompile Include="..\src\ui\DrawingMath.cpp" />
+    <ClCompile Include="..\src\ui\ContentLayout.cpp" />
     <ClCompile Include="..\src\data\Database.cpp" />
     <ClCompile Include="..\src\data\SettingsStore.cpp" />
     <ClCompile Include="..\src\data\Statement.cpp" />
