@@ -1,0 +1,36 @@
+# 参考资料，不入库
+docs/temp/
+
+# 构建产物
+Debug/
+Release/
+x64/
+x86/
+.vs/
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.idb
+*.tlog
+*.log
+*.user
+*.aps
+*.ncb
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.opendb
+
+# 数据库 / 运行时产物
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.corrupt
+*.bak
+
+# 根目录参考控件（入库去向由实现计划确认）
+/SWTableScrollViewWnd.cpp
+/SWTableScrollViewWnd.h
