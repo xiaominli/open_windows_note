@@ -1,0 +1,68 @@
+#include "doctest.h"
+#include "data/Database.h"
+#include "data/Migrations.h"
+#include "data/NoteStore.h"
+
+static own::Database freshDb() {
+    own::Database db; std::string err;
+    REQUIRE(db.open(":memory:", &err));
+    REQUIRE(own::migrate(db, &err));
+    return db;
+}
+
+TEST_CASE("insert then get roundtrips all fields") {
+    auto db = freshDb();
+    own::NoteStore store(db);
+    own::Note n;
+    n.type = own::NoteType::Checklist;
+    n.title = "标题";
+    n.contentBlob = {10,20,30};
+    n.plainText = "买 牛奶";
+    n.rect = {5,6,300,400};
+    n.opacity = 128; n.pinned = false; n.rolledUp = true; n.visible = false;
+    n.stickTarget = "chrome";
+    int64_t id = store.insertNote(n, 1000);
+    CHECK(id > 0);
+    auto got = store.getNote(id);
+    REQUIRE(got.has_value());
+    CHECK(got->title == "标题");
+    CHECK(got->contentBlob == std::vector<uint8_t>{10,20,30});
+    CHECK(got->rect.w == 300);
+    CHECK(got->opacity == 128);
+    CHECK(got->pinned == false);
+    CHECK(got->visible == false);
+    CHECK(got->createdAt == 1000);
+    CHECK(got->updatedAt == 1000);
+    CHECK(static_cast<int>(got->type) == static_cast<int>(own::NoteType::Checklist));
+}
+
+TEST_CASE("update refreshes updated_at only") {
+    auto db = freshDb(); own::NoteStore store(db);
+    own::Note n; n.title = "a";
+    int64_t id = store.insertNote(n, 1000);
+    auto got = store.getNote(id); got->title = "b";
+    REQUIRE(store.updateNote(*got, 2000));
+    auto g2 = store.getNote(id);
+    CHECK(g2->title == "b");
+    CHECK(g2->createdAt == 1000);
+    CHECK(g2->updatedAt == 2000);
+}
+
+TEST_CASE("delete removes note") {
+    auto db = freshDb(); own::NoteStore store(db);
+    int64_t id = store.insertNote(own::Note{}, 1000);
+    REQUIRE(store.deleteNote(id));
+    CHECK_FALSE(store.getNote(id).has_value());
+}
+
+TEST_CASE("allNotes sorted by updated_at desc") {
+    auto db = freshDb(); own::NoteStore store(db);
+    int64_t a = store.insertNote(own::Note{}, 1000);
+    int64_t b = store.insertNote(own::Note{}, 3000);
+    int64_t c = store.insertNote(own::Note{}, 2000);
+    auto all = store.allNotes();
+    REQUIRE(all.size() == 3);
+    CHECK(all[0].id == b);
+    CHECK(all[1].id == c);
+    CHECK(all[2].id == a);
+}
