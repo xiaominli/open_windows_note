@@ -4,6 +4,7 @@
 #include <vector>
 #include "app/AppHostWindow.h"
 #include "data/Database.h"
+#include "data/NoteStore.h"
 #include "ui/NoteWindow.h"
 
 // MFC application object. Single global instance `theApp` provides WinMain.
@@ -13,6 +14,7 @@ public:
     int  ExitInstance() override;
 private:
     own::Database  m_db;
+    std::unique_ptr<own::NoteStore> m_store;
     CAppHostWindow m_host;
     ULONG_PTR      m_gdiplusToken = 0;
     std::vector<std::unique_ptr<CNoteWindow>> m_notes;

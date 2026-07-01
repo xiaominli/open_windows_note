@@ -10,6 +10,9 @@ static const own::TitleBarMetrics kTitleMetrics{ 28, 20, 4, 4 };
 BEGIN_MESSAGE_MAP(CNoteWindow, CWnd)
     ON_WM_PAINT()
     ON_WM_ERASEBKGND()
+    ON_WM_LBUTTONDOWN()
+    ON_WM_MOUSEMOVE()
+    ON_WM_LBUTTONUP()
 END_MESSAGE_MAP()
 
 bool CNoteWindow::Create(const own::Note& note, own::NoteStore* store) {
@@ -67,4 +70,28 @@ void CNoteWindow::OnPaint() {
     }
     dc.BitBlt(0,0,rc.Width(),rc.Height(), &mem, 0,0, SRCCOPY);
     mem.SelectObject(old);
+}
+
+void CNoteWindow::OnLButtonDown(UINT, CPoint pt) {
+    auto L = layout();
+    if (own::hitTestTitleBar(L, pt.x, pt.y) == own::TitleHit::Drag) {
+        m_dragging = true;
+        ::GetCursorPos(&m_dragAnchorScreen);
+        GetWindowRect(&m_dragStartRect);
+        SetCapture();
+    }
+}
+void CNoteWindow::OnMouseMove(UINT, CPoint) {
+    if (!m_dragging) return;
+    CPoint cur; ::GetCursorPos(&cur);
+    int nx = m_dragStartRect.left + (cur.x - m_dragAnchorScreen.x);
+    int ny = m_dragStartRect.top  + (cur.y - m_dragAnchorScreen.y);
+    SetWindowPos(nullptr, nx, ny, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+}
+void CNoteWindow::OnLButtonUp(UINT, CPoint) {
+    if (!m_dragging) return;
+    m_dragging = false; ReleaseCapture();
+    CRect r; GetWindowRect(&r);
+    m_note.rect = { r.left, r.top, r.Width(), r.Height() };
+    if (m_store) m_store->updateGeometry(m_note.id, m_note.rect, "");
 }

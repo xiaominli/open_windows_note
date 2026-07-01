@@ -27,11 +27,11 @@ BOOL CNoteApp::InitInstance() {
     m_pMainWnd = &m_host;   // hidden host keeps the message loop alive
 
     // 显示所有 visible=1 的 note
-    own::NoteStore store(m_db);
+    m_store = std::make_unique<own::NoteStore>(m_db);
     own::NoteQuery q; q.onlyVisible = true;
-    for (const auto& n : store.query(q)) {
+    for (const auto& n : m_store->query(q)) {
         auto w = std::make_unique<CNoteWindow>();
-        if (w->Create(n, /*store owner set later in Task 8*/ nullptr))
+        if (w->Create(n, m_store.get()))
             m_notes.push_back(std::move(w));
     }
     return TRUE;
