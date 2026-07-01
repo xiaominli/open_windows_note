@@ -66,3 +66,30 @@ TEST_CASE("allNotes sorted by updated_at desc") {
     CHECK(all[1].id == c);
     CHECK(all[2].id == a);
 }
+
+TEST_CASE("query filters by search substring on plain_text") {
+    auto db = freshDb(); own::NoteStore store(db);
+    own::Note a; a.plainText = "买 牛奶 面包"; store.insertNote(a, 1000);
+    own::Note b; b.plainText = "开会 周一"; store.insertNote(b, 2000);
+    own::NoteQuery q; q.search = "牛奶";
+    auto r = store.query(q);
+    REQUIRE(r.size() == 1);
+    CHECK(r[0].plainText.find("牛奶") != std::string::npos);
+}
+
+TEST_CASE("query onlyVisible excludes hidden") {
+    auto db = freshDb(); own::NoteStore store(db);
+    own::Note a; a.visible = true;  store.insertNote(a, 1000);
+    own::Note b; b.visible = false; store.insertNote(b, 2000);
+    own::NoteQuery q; q.onlyVisible = true;
+    CHECK(store.query(q).size() == 1);
+}
+
+TEST_CASE("query filters by group") {
+    auto db = freshDb(); own::NoteStore store(db);
+    own::Note a; a.groupId = 7; store.insertNote(a, 1000);
+    own::Note b; b.groupId = 9; store.insertNote(b, 2000);
+    own::NoteQuery q; q.groupId = 7;
+    auto r = store.query(q);
+    REQUIRE(r.size() == 1); CHECK(r[0].groupId == 7);
+}

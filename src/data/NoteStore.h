@@ -4,6 +4,12 @@
 #include "domain/Models.h"
 namespace own {
 class Database;
+struct NoteQuery {
+    std::string search;
+    int64_t groupId = -1;
+    int64_t tagId = -1;
+    bool onlyVisible = false;
+};
 class NoteStore {
 public:
     explicit NoteStore(Database& db) : db_(db) {}
@@ -14,6 +20,7 @@ public:
     bool deleteNote(int64_t id);
     std::optional<Note> getNote(int64_t id);
     std::vector<Note> allNotes();
+    std::vector<Note> query(const NoteQuery& q);
 private:
     Note readRow(class Statement& s);  // 从 SELECT * 顺序读一行
     Database& db_;

@@ -103,4 +103,23 @@ std::vector<Note> NoteStore::allNotes() {
     return out;
 }
 
+std::vector<Note> NoteStore::query(const NoteQuery& q) {
+    std::string sql = std::string("SELECT ")+kCols+" FROM notes n";
+    std::vector<std::string> where;
+    if (q.tagId >= 0) sql += " JOIN note_tags nt ON nt.note_id=n.id AND nt.tag_id=?";
+    if (!q.search.empty()) where.push_back("plain_text LIKE '%'||?||'%'");
+    if (q.groupId >= 0)   where.push_back("group_id=?");
+    if (q.onlyVisible)    where.push_back("visible=1");
+    for (size_t i=0;i<where.size();++i) sql += (i==0?" WHERE ":" AND ") + where[i];
+    sql += " ORDER BY updated_at DESC, id DESC;";
+    Statement s(db_, sql);
+    int idx = 1;
+    if (q.tagId >= 0) s.bind(idx++, q.tagId);
+    if (!q.search.empty()) s.bind(idx++, q.search);
+    if (q.groupId >= 0) s.bind(idx++, q.groupId);
+    std::vector<Note> out;
+    while (s.step()) out.push_back(readRow(s));
+    return out;
+}
+
 } // namespace own
