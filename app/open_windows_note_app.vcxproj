@@ -128,6 +128,7 @@
     <ClCompile Include="..\src\ui\table\SWTableScrollViewWnd.cpp" />
     <ClCompile Include="..\src\ui\NoteListView.cpp" />
     <ClCompile Include="..\src\ui\SearchBox.cpp" />
+    <ClCompile Include="..\src\ui\TextPrompt.cpp" />
     <ClCompile Include="..\src\third_party\sqlite\sqlite3.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -153,6 +154,7 @@
     <ClInclude Include="..\src\ui\table\SWTableScrollViewWnd.h" />
     <ClInclude Include="..\src\ui\NoteListView.h" />
     <ClInclude Include="..\src\ui\SearchBox.h" />
+    <ClInclude Include="..\src\ui\TextPrompt.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
