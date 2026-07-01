@@ -11,11 +11,13 @@ public:
     static const UINT kHotkeyNewChecklist = 3;
     static const UINT kHotkeyNewDrawing = 4;
     static const UINT kHotkeyManager = 5;
+    static const UINT kHotkeyToggleAll = 6;
     std::function<void()> onNewNote;
     std::function<void()> onNewChecklist;
     std::function<void()> onNewDrawing;
     std::function<void()> onQuit;
     std::function<void()> onToggleManager;
+    std::function<void()> onToggleAll;
     bool Create();                 // create hidden top-level window + register hotkeys
 protected:
     afx_msg void OnHotKey(UINT idHotKey, UINT fuModifiers, UINT vk);

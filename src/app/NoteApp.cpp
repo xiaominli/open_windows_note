@@ -41,20 +41,28 @@ BOOL CNoteApp::InitInstance() {
         int64_t id = m_store->insertNote(n, (int64_t)time(nullptr));
         auto full = m_store->getNote(id);
         if (full) createAndShowNote(*full);
+        if (m_main) m_main->reloadList();
     };
     m_host.onNewChecklist = [this]{
         own::Note n; n.type = own::NoteType::Checklist; n.visible = true;
         int64_t id = m_store->insertNote(n, (int64_t)time(nullptr));
         auto full = m_store->getNote(id);
         if (full) createAndShowNote(*full);
+        if (m_main) m_main->reloadList();
     };
     m_host.onNewDrawing = [this]{
         own::Note n; n.type = own::NoteType::Drawing; n.visible = true;
         int64_t id = m_store->insertNote(n, (int64_t)time(nullptr));
         auto full = m_store->getNote(id);
         if (full) createAndShowNote(*full);
+        if (m_main) m_main->reloadList();
     };
     m_host.onQuit = []{ ::PostQuitMessage(0); };
+    m_host.onToggleAll = [this]{
+        m_allShown = !m_allShown;
+        setAllNotesVisible(m_allShown);
+        if (m_main) m_main->reloadList();
+    };
 
     // 管理器窗口：列出全部便签、搜索、右键操作
     m_main = std::make_unique<CMainFrame>();

@@ -29,5 +29,6 @@ private:
     std::unique_ptr<CMainFrame> m_main;
     ULONG_PTR      m_gdiplusToken = 0;
     HANDLE         m_singleton = nullptr;
+    bool           m_allShown = true;
     std::vector<std::unique_ptr<CNoteWindow>> m_notes;
 };
