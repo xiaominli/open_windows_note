@@ -10,6 +10,7 @@ CNoteApp theApp;   // the one and only application object; MFC supplies WinMain
 
 BOOL CNoteApp::InitInstance() {
     CWinApp::InitInstance();
+    AfxInitRichEdit2();   // RichEdit20W 注册，供 CTextContentView 使用
 
     // 单实例：已有实例则通知其新建一条 note 后退出
     m_singleton = ::CreateMutex(nullptr, FALSE, _T("open_windows_note_singleton"));

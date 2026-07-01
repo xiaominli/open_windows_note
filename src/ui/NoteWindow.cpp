@@ -1,8 +1,11 @@
 #include "ui/NoteWindow.h"
 #include "ui/MonitorEnum.h"
+#include "ui/ContentLayout.h"
+#include "ui/ContentViewFactory.h"
 #include "domain/Geometry.h"
 #include "data/NoteStore.h"
 #include <gdiplus.h>
+#include <ctime>
 using namespace Gdiplus;
 
 static const own::TitleBarMetrics kTitleMetrics{ 28, 20, 4, 4 };
@@ -14,6 +17,9 @@ BEGIN_MESSAGE_MAP(CNoteWindow, CWnd)
     ON_WM_MOUSEMOVE()
     ON_WM_LBUTTONUP()
     ON_WM_SETCURSOR()
+    ON_WM_SIZE()
+    ON_WM_TIMER()
+    ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 bool CNoteWindow::Create(const own::Note& note, own::NoteStore* store) {
@@ -28,6 +34,16 @@ bool CNoteWindow::Create(const own::Note& note, own::NoteStore* store) {
         return false;
     ::SetLayeredWindowAttributes(m_hWnd, 0, (BYTE)m_note.opacity, LWA_ALPHA);
     ShowWindow(SW_SHOWNOACTIVATE);
+
+    m_content = own::makeContentView(m_note.type);
+    if (m_content) {
+        CRect rc; GetClientRect(&rc);
+        own::RectI cr = own::noteContentRect({0,0,rc.Width(),rc.Height()}, kTitleMetrics.height, 6);
+        m_content->Create(this, CRect(cr.x, cr.y, cr.x+cr.w, cr.y+cr.h));
+        m_content->Load(m_note);
+        if (m_note.rolledUp) m_content->SetVisible(false);
+    }
+    SetTimer(kSaveTimer, 800, nullptr);
     return true;
 }
 own::TitleBarRects CNoteWindow::layout() const {
@@ -62,8 +78,8 @@ void CNoteWindow::OnPaint() {
         SolidBrush dot(Color(255,0x40,0x40,0x40));
         g.FillRectangle(&dot, L.pinBtn.x+6, L.pinBtn.y+4, 6, L.pinBtn.h-8);
         g.DrawEllipse(&pen, L.opacityBtn.x+3, L.opacityBtn.y+3, L.opacityBtn.w-6, L.opacityBtn.h-6);
-        // 占位内容（卷起时不画，避免负尺寸区域）
-        if (!m_note.rolledUp) {
+        // 占位内容（卷起时不画；有内容视图时由子控件自绘）
+        if (!m_note.rolledUp && !m_content) {
             FontFamily ff(L"Segoe UI"); Font font(&ff, 12, FontStyleRegular, UnitPixel);
             SolidBrush text(Color(255,0x20,0x20,0x20));
             std::string body = m_note.plainText.empty() ? std::string("(empty)") : m_note.plainText;
@@ -101,6 +117,7 @@ void CNoteWindow::OnLButtonDown(UINT, CPoint pt) {
     auto L = layout();
     switch (own::hitTestTitleBar(L, pt.x, pt.y)) {
         case own::TitleHit::Close: {
+            flushContent();          // 隐藏前存一次
             ShowWindow(SW_HIDE);
             m_note.visible = false;
             if (m_store) m_store->updateFlags(m_note.id, m_note.opacity, m_note.pinned, m_note.rolledUp, false);
@@ -119,10 +136,12 @@ void CNoteWindow::OnLButtonDown(UINT, CPoint pt) {
                 m_expandedHeight = r.Height();
                 SetWindowPos(nullptr,0,0,r.Width(), kTitleMetrics.height, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
                 m_note.rolledUp = true;
+                if (m_content) m_content->SetVisible(false);
             } else {
                 int h = m_expandedHeight > 0 ? m_expandedHeight : 200;
                 SetWindowPos(nullptr,0,0,r.Width(), h, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
                 m_note.rolledUp = false;
+                if (m_content) m_content->SetVisible(true);
             }
             if (m_store) m_store->updateFlags(m_note.id, m_note.opacity, m_note.pinned, m_note.rolledUp, m_note.visible);
             Invalidate(FALSE); return;
@@ -171,4 +190,32 @@ void CNoteWindow::OnLButtonUp(UINT, CPoint) {
     CRect r; GetWindowRect(&r);
     m_note.rect = { r.left, r.top, r.Width(), r.Height() };
     if (m_store) m_store->updateGeometry(m_note.id, m_note.rect, "");
+}
+
+void CNoteWindow::layoutContent() {
+    if (!m_content) return;
+    CRect rc; GetClientRect(&rc);
+    own::RectI cr = own::noteContentRect({0,0,rc.Width(),rc.Height()}, kTitleMetrics.height, 6);
+    m_content->Reposition(CRect(cr.x, cr.y, cr.x+cr.w, cr.y+cr.h));
+}
+void CNoteWindow::flushContent() {
+    if (!m_content || !m_store) return;
+    if (!m_content->IsDirty()) return;
+    std::vector<uint8_t> blob; std::string plain;
+    if (m_content->Save(blob, plain))
+        m_store->updateContent(m_note.id, blob, plain, (int64_t)time(nullptr));
+}
+void CNoteWindow::OnSize(UINT nType, int cx, int cy) {
+    CWnd::OnSize(nType, cx, cy);
+    layoutContent();
+}
+void CNoteWindow::OnTimer(UINT_PTR id) {
+    if (id == kSaveTimer) flushContent();
+    CWnd::OnTimer(id);
+}
+void CNoteWindow::OnDestroy() {
+    KillTimer(kSaveTimer);
+    flushContent();
+    if (m_content) { m_content->DestroyView(); m_content.reset(); }
+    CWnd::OnDestroy();
 }
