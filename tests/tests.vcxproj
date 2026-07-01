@@ -104,8 +104,10 @@
     <ClCompile Include="test_apppaths.cpp" />
     <ClCompile Include="test_settings_store.cpp" />
     <ClCompile Include="test_titlebar_layout.cpp" />
+    <ClCompile Include="test_resize_math.cpp" />
     <ClCompile Include="..\src\app\AppPaths.cpp" />
     <ClCompile Include="..\src\ui\TitleBarLayout.cpp" />
+    <ClCompile Include="..\src\ui\ResizeMath.cpp" />
     <ClCompile Include="..\src\data\Database.cpp" />
     <ClCompile Include="..\src\data\SettingsStore.cpp" />
     <ClCompile Include="..\src\data\Statement.cpp" />

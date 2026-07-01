@@ -103,6 +103,7 @@
     <ClCompile Include="..\src\data\Statement.cpp" />
     <ClCompile Include="..\src\data\SettingsStore.cpp" />
     <ClCompile Include="..\src\ui\TitleBarLayout.cpp" />
+    <ClCompile Include="..\src\ui\ResizeMath.cpp" />
     <ClCompile Include="..\src\third_party\sqlite\sqlite3.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
