@@ -1,6 +1,9 @@
 # 参考资料，不入库
 docs/temp/
 
+# 本地 Claude 配置
+.claude/
+
 # 构建产物
 Debug/
 Release/
