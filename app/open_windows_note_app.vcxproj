@@ -121,6 +121,9 @@
     <ClCompile Include="..\src\ui\ContentViewFactory.cpp" />
     <ClCompile Include="..\src\ui\ChecklistContentView.cpp" />
     <ClCompile Include="..\src\ui\DrawingContentView.cpp" />
+    <ClCompile Include="..\src\ui\table\TableViewShim.cpp" />
+    <ClCompile Include="..\src\ui\table\SWInplaceEdit.cpp" />
+    <ClCompile Include="..\src\ui\table\SWTableScrollViewWnd.cpp" />
     <ClCompile Include="..\src\third_party\sqlite\sqlite3.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -138,6 +141,10 @@
     <ClInclude Include="..\src\ui\ContentViewFactory.h" />
     <ClInclude Include="..\src\ui\ChecklistContentView.h" />
     <ClInclude Include="..\src\ui\DrawingContentView.h" />
+    <ClInclude Include="..\src\ui\table\TableViewShim.h" />
+    <ClInclude Include="..\src\ui\table\SWTableScrollViewDefs.h" />
+    <ClInclude Include="..\src\ui\table\SWInplaceEdit.h" />
+    <ClInclude Include="..\src\ui\table\SWTableScrollViewWnd.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
