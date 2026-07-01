@@ -1,6 +1,8 @@
 #include "app/NoteApp.h"
 #include "app/AppPaths.h"
 #include "app/DbBootstrap.h"
+#include "data/NoteStore.h"
+#include <gdiplus.h>
 #include <string>
 
 CNoteApp theApp;   // the one and only application object; MFC supplies WinMain
@@ -17,12 +19,26 @@ BOOL CNoteApp::InitInstance() {
         return FALSE;
     }
 
+    Gdiplus::GdiplusStartupInput gsi;
+    Gdiplus::GdiplusStartup(&m_gdiplusToken, &gsi, nullptr);
+
     if (!m_host.Create())
         return FALSE;
     m_pMainWnd = &m_host;   // hidden host keeps the message loop alive
+
+    // 显示所有 visible=1 的 note
+    own::NoteStore store(m_db);
+    own::NoteQuery q; q.onlyVisible = true;
+    for (const auto& n : store.query(q)) {
+        auto w = std::make_unique<CNoteWindow>();
+        if (w->Create(n, /*store owner set later in Task 8*/ nullptr))
+            m_notes.push_back(std::move(w));
+    }
     return TRUE;
 }
 
 int CNoteApp::ExitInstance() {
+    m_notes.clear();
+    if (m_gdiplusToken) Gdiplus::GdiplusShutdown(m_gdiplusToken);
     return CWinApp::ExitInstance();
 }

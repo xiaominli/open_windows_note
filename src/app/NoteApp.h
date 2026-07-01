@@ -1,7 +1,10 @@
 #pragma once
 #include <afxwin.h>
+#include <memory>
+#include <vector>
 #include "app/AppHostWindow.h"
 #include "data/Database.h"
+#include "ui/NoteWindow.h"
 
 // MFC application object. Single global instance `theApp` provides WinMain.
 class CNoteApp : public CWinApp {
@@ -11,4 +14,6 @@ public:
 private:
     own::Database  m_db;
     CAppHostWindow m_host;
+    ULONG_PTR      m_gdiplusToken = 0;
+    std::vector<std::unique_ptr<CNoteWindow>> m_notes;
 };
