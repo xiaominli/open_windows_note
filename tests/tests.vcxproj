@@ -102,8 +102,10 @@
     <ClCompile Include="test_reminder_rules.cpp" />
     <ClCompile Include="test_geometry.cpp" />
     <ClCompile Include="test_apppaths.cpp" />
+    <ClCompile Include="test_settings_store.cpp" />
     <ClCompile Include="..\src\app\AppPaths.cpp" />
     <ClCompile Include="..\src\data\Database.cpp" />
+    <ClCompile Include="..\src\data\SettingsStore.cpp" />
     <ClCompile Include="..\src\data\Statement.cpp" />
     <ClCompile Include="..\src\data\Migrations.cpp" />
     <ClCompile Include="..\src\data\NoteStore.cpp" />
