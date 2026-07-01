@@ -13,6 +13,7 @@ BEGIN_MESSAGE_MAP(CNoteWindow, CWnd)
     ON_WM_LBUTTONDOWN()
     ON_WM_MOUSEMOVE()
     ON_WM_LBUTTONUP()
+    ON_WM_SETCURSOR()
 END_MESSAGE_MAP()
 
 bool CNoteWindow::Create(const own::Note& note, own::NoteStore* store) {
@@ -72,7 +73,29 @@ void CNoteWindow::OnPaint() {
     mem.SelectObject(old);
 }
 
+BOOL CNoteWindow::OnSetCursor(CWnd*, UINT, UINT) {
+    CPoint pt; ::GetCursorPos(&pt); ScreenToClient(&pt);
+    CRect rc; GetClientRect(&rc);
+    auto e = own::hitTestResizeEdge({0,0,rc.Width(),rc.Height()}, pt.x, pt.y, 6);
+    LPCTSTR c = IDC_ARROW;
+    switch (e) {
+        case own::ResizeEdge::Left: case own::ResizeEdge::Right: c = IDC_SIZEWE; break;
+        case own::ResizeEdge::Top: case own::ResizeEdge::Bottom: c = IDC_SIZENS; break;
+        case own::ResizeEdge::TopLeft: case own::ResizeEdge::BottomRight: c = IDC_SIZENWSE; break;
+        case own::ResizeEdge::TopRight: case own::ResizeEdge::BottomLeft: c = IDC_SIZENESW; break;
+        default: break;
+    }
+    ::SetCursor(::LoadCursor(nullptr, c));
+    return TRUE;
+}
 void CNoteWindow::OnLButtonDown(UINT, CPoint pt) {
+    CRect rc; GetClientRect(&rc);
+    auto edge = own::hitTestResizeEdge({0,0,rc.Width(),rc.Height()}, pt.x, pt.y, 6);
+    if (edge != own::ResizeEdge::None) {
+        m_resizing = true; m_resizeEdge = edge;
+        ::GetCursorPos(&m_resizeAnchorScreen); GetWindowRect(&m_resizeStartRect);
+        SetCapture(); return;
+    }
     auto L = layout();
     if (own::hitTestTitleBar(L, pt.x, pt.y) == own::TitleHit::Drag) {
         m_dragging = true;
@@ -82,6 +105,16 @@ void CNoteWindow::OnLButtonDown(UINT, CPoint pt) {
     }
 }
 void CNoteWindow::OnMouseMove(UINT, CPoint) {
+    if (m_resizing) {
+        CPoint cur; ::GetCursorPos(&cur);
+        int dx = cur.x - m_resizeAnchorScreen.x, dy = cur.y - m_resizeAnchorScreen.y;
+        own::RectI start{ m_resizeStartRect.left, m_resizeStartRect.top,
+                          m_resizeStartRect.Width(), m_resizeStartRect.Height() };
+        own::RectI nr = own::applyResize(start, m_resizeEdge, dx, dy, 120, 80);
+        SetWindowPos(nullptr, nr.x, nr.y, nr.w, nr.h, SWP_NOZORDER | SWP_NOACTIVATE);
+        Invalidate(FALSE);
+        return;
+    }
     if (!m_dragging) return;
     CPoint cur; ::GetCursorPos(&cur);
     int nx = m_dragStartRect.left + (cur.x - m_dragAnchorScreen.x);
@@ -89,6 +122,13 @@ void CNoteWindow::OnMouseMove(UINT, CPoint) {
     SetWindowPos(nullptr, nx, ny, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 void CNoteWindow::OnLButtonUp(UINT, CPoint) {
+    if (m_resizing) {
+        m_resizing = false; ReleaseCapture();
+        CRect r; GetWindowRect(&r);
+        m_note.rect = { r.left, r.top, r.Width(), r.Height() };
+        if (m_store) m_store->updateGeometry(m_note.id, m_note.rect, "");
+        return;
+    }
     if (!m_dragging) return;
     m_dragging = false; ReleaseCapture();
     CRect r; GetWindowRect(&r);

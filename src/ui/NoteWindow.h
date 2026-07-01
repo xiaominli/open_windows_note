@@ -2,6 +2,7 @@
 #include <afxwin.h>
 #include "domain/Models.h"
 #include "ui/TitleBarLayout.h"
+#include "ui/ResizeMath.h"
 namespace own { class NoteStore; }
 class CNoteWindow : public CWnd {
 public:
@@ -13,6 +14,7 @@ protected:
     afx_msg void OnLButtonDown(UINT nFlags, CPoint pt);
     afx_msg void OnMouseMove(UINT nFlags, CPoint pt);
     afx_msg void OnLButtonUp(UINT nFlags, CPoint pt);
+    afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
     DECLARE_MESSAGE_MAP()
 private:
     own::TitleBarRects layout() const;   // 用当前 client 尺寸算标题栏
@@ -21,4 +23,8 @@ private:
     bool m_dragging = false;
     CPoint m_dragAnchorScreen;   // 按下时鼠标屏幕坐标
     CRect  m_dragStartRect;      // 按下时窗口屏幕矩形
+    own::ResizeEdge m_resizeEdge = own::ResizeEdge::None;
+    bool m_resizing = false;
+    CPoint m_resizeAnchorScreen;
+    CRect  m_resizeStartRect;
 };
