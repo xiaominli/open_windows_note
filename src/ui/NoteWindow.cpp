@@ -62,12 +62,14 @@ void CNoteWindow::OnPaint() {
         SolidBrush dot(Color(255,0x40,0x40,0x40));
         g.FillRectangle(&dot, L.pinBtn.x+6, L.pinBtn.y+4, 6, L.pinBtn.h-8);
         g.DrawEllipse(&pen, L.opacityBtn.x+3, L.opacityBtn.y+3, L.opacityBtn.w-6, L.opacityBtn.h-6);
-        // 占位内容
-        FontFamily ff(L"Segoe UI"); Font font(&ff, 12, FontStyleRegular, UnitPixel);
-        SolidBrush text(Color(255,0x20,0x20,0x20));
-        std::string body = m_note.plainText.empty() ? std::string("(empty)") : m_note.plainText;
-        std::wstring w(body.begin(), body.end());   // ASCII 占位；真正内容 P3 处理
-        g.DrawString(w.c_str(), (int)w.size(), &font, PointF((REAL)6, (REAL)(kTitleMetrics.height+6)), &text);
+        // 占位内容（卷起时不画，避免负尺寸区域）
+        if (!m_note.rolledUp) {
+            FontFamily ff(L"Segoe UI"); Font font(&ff, 12, FontStyleRegular, UnitPixel);
+            SolidBrush text(Color(255,0x20,0x20,0x20));
+            std::string body = m_note.plainText.empty() ? std::string("(empty)") : m_note.plainText;
+            std::wstring w(body.begin(), body.end());   // ASCII 占位；真正内容 P3 处理
+            g.DrawString(w.c_str(), (int)w.size(), &font, PointF((REAL)6, (REAL)(kTitleMetrics.height+6)), &text);
+        }
     }
     dc.BitBlt(0,0,rc.Width(),rc.Height(), &mem, 0,0, SRCCOPY);
     mem.SelectObject(old);
@@ -97,11 +99,46 @@ void CNoteWindow::OnLButtonDown(UINT, CPoint pt) {
         SetCapture(); return;
     }
     auto L = layout();
-    if (own::hitTestTitleBar(L, pt.x, pt.y) == own::TitleHit::Drag) {
-        m_dragging = true;
-        ::GetCursorPos(&m_dragAnchorScreen);
-        GetWindowRect(&m_dragStartRect);
-        SetCapture();
+    switch (own::hitTestTitleBar(L, pt.x, pt.y)) {
+        case own::TitleHit::Close: {
+            ShowWindow(SW_HIDE);
+            m_note.visible = false;
+            if (m_store) m_store->updateFlags(m_note.id, m_note.opacity, m_note.pinned, m_note.rolledUp, false);
+            return;
+        }
+        case own::TitleHit::Pin: {
+            m_note.pinned = !m_note.pinned;
+            SetWindowPos(m_note.pinned ? &wndTopMost : &wndNoTopMost, 0,0,0,0,
+                         SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+            if (m_store) m_store->updateFlags(m_note.id, m_note.opacity, m_note.pinned, m_note.rolledUp, m_note.visible);
+            Invalidate(FALSE); return;
+        }
+        case own::TitleHit::Roll: {
+            CRect r; GetWindowRect(&r);
+            if (!m_note.rolledUp) {
+                m_expandedHeight = r.Height();
+                SetWindowPos(nullptr,0,0,r.Width(), kTitleMetrics.height, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+                m_note.rolledUp = true;
+            } else {
+                int h = m_expandedHeight > 0 ? m_expandedHeight : 200;
+                SetWindowPos(nullptr,0,0,r.Width(), h, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+                m_note.rolledUp = false;
+            }
+            if (m_store) m_store->updateFlags(m_note.id, m_note.opacity, m_note.pinned, m_note.rolledUp, m_note.visible);
+            Invalidate(FALSE); return;
+        }
+        case own::TitleHit::Opacity: {
+            static const int steps[] = {255,204,153,102};
+            int idx = 0; for (int i=0;i<4;++i) if (steps[i]==m_note.opacity) { idx=i; break; }
+            m_note.opacity = steps[(idx+1)%4];
+            ::SetLayeredWindowAttributes(m_hWnd, 0, (BYTE)m_note.opacity, LWA_ALPHA);
+            if (m_store) m_store->updateFlags(m_note.id, m_note.opacity, m_note.pinned, m_note.rolledUp, m_note.visible);
+            return;
+        }
+        case own::TitleHit::Drag: {
+            m_dragging = true; ::GetCursorPos(&m_dragAnchorScreen); GetWindowRect(&m_dragStartRect); SetCapture(); return;
+        }
+        default: break;
     }
 }
 void CNoteWindow::OnMouseMove(UINT, CPoint) {

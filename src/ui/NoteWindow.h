@@ -27,4 +27,5 @@ private:
     bool m_resizing = false;
     CPoint m_resizeAnchorScreen;
     CRect  m_resizeStartRect;
+    int m_expandedHeight = 0;    // 卷起前的展开态高度缓存
 };
