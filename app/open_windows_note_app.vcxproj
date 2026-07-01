@@ -119,6 +119,7 @@
     <ClCompile Include="..\src\ui\NoteWindow.cpp" />
     <ClCompile Include="..\src\ui\TextContentView.cpp" />
     <ClCompile Include="..\src\ui\ContentViewFactory.cpp" />
+    <ClCompile Include="..\src\ui\ChecklistContentView.cpp" />
     <ClCompile Include="..\src\third_party\sqlite\sqlite3.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -134,6 +135,7 @@
     <ClInclude Include="..\src\ui\INoteContentView.h" />
     <ClInclude Include="..\src\ui\TextContentView.h" />
     <ClInclude Include="..\src\ui\ContentViewFactory.h" />
+    <ClInclude Include="..\src\ui\ChecklistContentView.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

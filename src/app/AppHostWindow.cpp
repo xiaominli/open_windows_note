@@ -12,16 +12,19 @@ bool CAppHostWindow::Create() {
     // Temporary hotkeys Ctrl+Alt+Q / Ctrl+Alt+N (P5 replaces the whole scheme).
     ::RegisterHotKey(m_hWnd, kHotkeyQuit, MOD_CONTROL | MOD_ALT, 'Q');
     ::RegisterHotKey(m_hWnd, kHotkeyNew,  MOD_CONTROL | MOD_ALT, 'N');
+    ::RegisterHotKey(m_hWnd, kHotkeyNewChecklist, MOD_CONTROL | MOD_ALT, '2');
     return true;
 }
 
 void CAppHostWindow::OnHotKey(UINT idHotKey, UINT, UINT) {
     if (idHotKey == kHotkeyQuit) { if (onQuit) onQuit(); else ::PostQuitMessage(0); }
     else if (idHotKey == kHotkeyNew) { if (onNewNote) onNewNote(); }
+    else if (idHotKey == kHotkeyNewChecklist) { if (onNewChecklist) onNewChecklist(); }
 }
 
 void CAppHostWindow::OnDestroy() {
     ::UnregisterHotKey(m_hWnd, kHotkeyQuit);
     ::UnregisterHotKey(m_hWnd, kHotkeyNew);
+    ::UnregisterHotKey(m_hWnd, kHotkeyNewChecklist);
     CWnd::OnDestroy();
 }

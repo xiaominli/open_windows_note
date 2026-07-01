@@ -8,7 +8,9 @@ class CAppHostWindow : public CWnd {
 public:
     static const UINT kHotkeyQuit = 1;
     static const UINT kHotkeyNew  = 2;
+    static const UINT kHotkeyNewChecklist = 3;
     std::function<void()> onNewNote;
+    std::function<void()> onNewChecklist;
     std::function<void()> onQuit;
     bool Create();                 // create hidden top-level window + register hotkeys
 protected:
