@@ -13,9 +13,12 @@ public:
     BOOL InitInstance() override;
     int  ExitInstance() override;
 private:
+    void createAndShowNote(const own::Note& seed);
+
     own::Database  m_db;
     std::unique_ptr<own::NoteStore> m_store;
     CAppHostWindow m_host;
     ULONG_PTR      m_gdiplusToken = 0;
+    HANDLE         m_singleton = nullptr;
     std::vector<std::unique_ptr<CNoteWindow>> m_notes;
 };

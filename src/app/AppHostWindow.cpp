@@ -9,17 +9,19 @@ bool CAppHostWindow::Create() {
     LPCTSTR cls = AfxRegisterWndClass(0);
     if (!CreateEx(0, cls, _T("OwnAppHost"), WS_POPUP, CRect(0, 0, 0, 0), NULL, 0))
         return false;
-    // Temporary quit hotkey Ctrl+Alt+Q (P5 replaces the whole hotkey scheme).
+    // Temporary hotkeys Ctrl+Alt+Q / Ctrl+Alt+N (P5 replaces the whole scheme).
     ::RegisterHotKey(m_hWnd, kHotkeyQuit, MOD_CONTROL | MOD_ALT, 'Q');
+    ::RegisterHotKey(m_hWnd, kHotkeyNew,  MOD_CONTROL | MOD_ALT, 'N');
     return true;
 }
 
 void CAppHostWindow::OnHotKey(UINT idHotKey, UINT, UINT) {
-    if (idHotKey == kHotkeyQuit)
-        ::PostQuitMessage(0);
+    if (idHotKey == kHotkeyQuit) { if (onQuit) onQuit(); else ::PostQuitMessage(0); }
+    else if (idHotKey == kHotkeyNew) { if (onNewNote) onNewNote(); }
 }
 
 void CAppHostWindow::OnDestroy() {
     ::UnregisterHotKey(m_hWnd, kHotkeyQuit);
+    ::UnregisterHotKey(m_hWnd, kHotkeyNew);
     CWnd::OnDestroy();
 }
