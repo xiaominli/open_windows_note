@@ -96,6 +96,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\app\NoteApp.cpp" />
+    <ClCompile Include="..\src\app\MainFrame.cpp" />
     <ClCompile Include="..\src\app\AppHostWindow.cpp" />
     <ClCompile Include="..\src\app\AppPaths.cpp" />
     <ClCompile Include="..\src\app\AppPathsWin.cpp" />
@@ -136,6 +137,7 @@
     <ClInclude Include="..\src\app\NoteApp.h" />
     <ClInclude Include="..\src\app\AppHostWindow.h" />
     <ClInclude Include="..\src\app\NoteWindowHost.h" />
+    <ClInclude Include="..\src\app\MainFrame.h" />
     <ClInclude Include="..\src\app\AppPaths.h" />
     <ClInclude Include="..\src\app\DbBootstrap.h" />
     <ClInclude Include="..\src\ui\MonitorEnum.h" />

@@ -56,6 +56,12 @@ BOOL CNoteApp::InitInstance() {
     };
     m_host.onQuit = []{ ::PostQuitMessage(0); };
 
+    // 管理器窗口：列出全部便签、搜索、右键操作
+    m_main = std::make_unique<CMainFrame>();
+    m_main->Create(m_store.get(), this);
+    m_main->ShowWindow(SW_SHOW);
+    m_host.onToggleManager = [this]{ if (m_main) m_main->ToggleShow(); };
+
     if (!m_host.Create())
         return FALSE;
     m_pMainWnd = &m_host;   // hidden host keeps the message loop alive

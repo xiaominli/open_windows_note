@@ -4,6 +4,7 @@
 #include <vector>
 #include "app/AppHostWindow.h"
 #include "app/NoteWindowHost.h"
+#include "app/MainFrame.h"
 #include "data/Database.h"
 #include "data/NoteStore.h"
 #include "ui/NoteWindow.h"
@@ -25,6 +26,7 @@ private:
     own::Database  m_db;
     std::unique_ptr<own::NoteStore> m_store;
     CAppHostWindow m_host;
+    std::unique_ptr<CMainFrame> m_main;
     ULONG_PTR      m_gdiplusToken = 0;
     HANDLE         m_singleton = nullptr;
     std::vector<std::unique_ptr<CNoteWindow>> m_notes;

@@ -14,6 +14,7 @@ bool CAppHostWindow::Create() {
     ::RegisterHotKey(m_hWnd, kHotkeyNew,  MOD_CONTROL | MOD_ALT, 'N');
     ::RegisterHotKey(m_hWnd, kHotkeyNewChecklist, MOD_CONTROL | MOD_ALT, '2');
     ::RegisterHotKey(m_hWnd, kHotkeyNewDrawing, MOD_CONTROL | MOD_ALT, '3');
+    ::RegisterHotKey(m_hWnd, kHotkeyManager, MOD_CONTROL | MOD_ALT, 'M');
     return true;
 }
 
@@ -22,6 +23,7 @@ void CAppHostWindow::OnHotKey(UINT idHotKey, UINT, UINT) {
     else if (idHotKey == kHotkeyNew) { if (onNewNote) onNewNote(); }
     else if (idHotKey == kHotkeyNewChecklist) { if (onNewChecklist) onNewChecklist(); }
     else if (idHotKey == kHotkeyNewDrawing) { if (onNewDrawing) onNewDrawing(); }
+    else if (idHotKey == kHotkeyManager) { if (onToggleManager) onToggleManager(); }
 }
 
 void CAppHostWindow::OnDestroy() {
@@ -29,5 +31,6 @@ void CAppHostWindow::OnDestroy() {
     ::UnregisterHotKey(m_hWnd, kHotkeyNew);
     ::UnregisterHotKey(m_hWnd, kHotkeyNewChecklist);
     ::UnregisterHotKey(m_hWnd, kHotkeyNewDrawing);
+    ::UnregisterHotKey(m_hWnd, kHotkeyManager);
     CWnd::OnDestroy();
 }
