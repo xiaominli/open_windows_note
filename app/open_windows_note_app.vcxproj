@@ -99,8 +99,11 @@
     <ClCompile Include="..\src\app\AppHostWindow.cpp" />
     <ClCompile Include="..\src\app\AppPaths.cpp" />
     <ClCompile Include="..\src\app\AppPathsWin.cpp" />
+    <ClCompile Include="..\src\app\DbBootstrap.cpp" />
     <ClCompile Include="..\src\data\Database.cpp" />
     <ClCompile Include="..\src\data\Statement.cpp" />
+    <ClCompile Include="..\src\data\Migrations.cpp" />
+    <ClCompile Include="..\src\data\NoteStore.cpp" />
     <ClCompile Include="..\src\data\SettingsStore.cpp" />
     <ClCompile Include="..\src\ui\TitleBarLayout.cpp" />
     <ClCompile Include="..\src\ui\ResizeMath.cpp" />
@@ -113,6 +116,7 @@
     <ClInclude Include="..\src\app\NoteApp.h" />
     <ClInclude Include="..\src\app\AppHostWindow.h" />
     <ClInclude Include="..\src\app\AppPaths.h" />
+    <ClInclude Include="..\src\app\DbBootstrap.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
