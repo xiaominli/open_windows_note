@@ -57,4 +57,12 @@ std::string formatHotkey(const Hotkey& h) {
     else s += "?";
     return s;
 }
+std::vector<std::pair<int,int>> findHotkeyConflicts(const std::vector<Hotkey>& hs) {
+    std::vector<std::pair<int,int>> out;
+    for (int i = 0; i < (int)hs.size(); ++i)
+        for (int j = i + 1; j < (int)hs.size(); ++j)
+            if (hs[i].mods == hs[j].mods && hs[i].vk == hs[j].vk)
+                out.push_back({ i, j });
+    return out;
+}
 }
