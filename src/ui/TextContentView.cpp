@@ -25,7 +25,16 @@ DWORD CALLBACK streamOutCb(DWORD_PTR cookie, LPBYTE src, LONG cb, LONG* pcb) {
 bool CTextContentView::Create(CWnd* parent, const CRect& rc) {
     DWORD style = WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL
                 | ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN;
-    if (!m_edit.Create(style, rc, parent, 0x1001)) return false;
+    // 优先用 RichEdit 4.1 (RICHEDIT50W / Msftedit.dll)：riched20 的中文 IME 组字有已知问题。
+    HWND h = ::CreateWindowExW(0, L"RICHEDIT50W", L"", style,
+                               rc.left, rc.top, rc.Width(), rc.Height(),
+                               parent->GetSafeHwnd(), (HMENU)(UINT_PTR)0x1001,
+                               ::AfxGetInstanceHandle(), nullptr);
+    if (h) {
+        m_edit.Attach(h);
+    } else if (!m_edit.Create(style, rc, parent, 0x1001)) {  // 回落 RichEdit 2.0
+        return false;
+    }
     m_edit.SetEventMask(m_edit.GetEventMask() | ENM_CHANGE);
     m_created = true;
     return true;
@@ -53,8 +62,11 @@ bool CTextContentView::Save(std::vector<uint8_t>& outBlob, std::string& outPlain
     EDITSTREAM es{ (DWORD_PTR)&ctx, 0, streamOutCb };
     m_edit.StreamOut(SF_RTF, es);
     CString w; m_edit.GetWindowText(w);
-    CStringA utf8(w);   // 便签正文通常 ASCII/本地页；plain_text 仅供 LIKE 搜索
-    outPlain = own::searchNormalize(std::string((LPCSTR)utf8));
+    // 转 UTF-8（与列表 u8ToWide / 搜索缓存一致）；CStringA 会按 ANSI 转，中文会乱码
+    int n = ::WideCharToMultiByte(CP_UTF8, 0, w, w.GetLength(), nullptr, 0, nullptr, nullptr);
+    std::string u8(n > 0 ? n : 0, '\0');
+    if (n > 0) ::WideCharToMultiByte(CP_UTF8, 0, w, w.GetLength(), &u8[0], n, nullptr, nullptr);
+    outPlain = own::searchNormalize(u8);
     m_edit.SetModify(FALSE);
     return true;
 }
