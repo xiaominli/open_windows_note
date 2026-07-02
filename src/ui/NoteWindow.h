@@ -17,6 +17,7 @@ protected:
     afx_msg void OnMouseMove(UINT nFlags, CPoint pt);
     afx_msg void OnLButtonUp(UINT nFlags, CPoint pt);
     afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
+    afx_msg int  OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message);
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg void OnDestroy();

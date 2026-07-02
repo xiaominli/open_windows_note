@@ -17,6 +17,7 @@ BEGIN_MESSAGE_MAP(CNoteWindow, CWnd)
     ON_WM_MOUSEMOVE()
     ON_WM_LBUTTONUP()
     ON_WM_SETCURSOR()
+    ON_WM_MOUSEACTIVATE()
     ON_WM_SIZE()
     ON_WM_TIMER()
     ON_WM_DESTROY()
@@ -105,6 +106,11 @@ BOOL CNoteWindow::OnSetCursor(CWnd*, UINT, UINT) {
     }
     ::SetCursor(::LoadCursor(nullptr, c));
     return TRUE;
+}
+int CNoteWindow::OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message) {
+    // 点便签时强制成为前台窗口：中文 IME 组字按前台窗路由，否则拼音会以 ASCII 漏进控件。
+    ::SetForegroundWindow(m_hWnd);
+    return CWnd::OnMouseActivate(pDesktopWnd, nHitTest, message);   // MA_ACTIVATE
 }
 void CNoteWindow::OnLButtonDown(UINT, CPoint pt) {
     CRect rc; GetClientRect(&rc);
