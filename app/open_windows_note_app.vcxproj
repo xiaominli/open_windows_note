@@ -115,6 +115,7 @@
     <ClCompile Include="..\src\domain\Hotkey.cpp" />
     <ClCompile Include="..\src\services\HotkeyManager.cpp" />
     <ClCompile Include="..\src\services\AutostartManager.cpp" />
+    <ClCompile Include="..\src\services\TrayIcon.cpp" />
     <ClCompile Include="..\src\ui\TitleBarLayout.cpp" />
     <ClCompile Include="..\src\ui\ResizeMath.cpp" />
     <ClCompile Include="..\src\ui\ChecklistLayout.cpp" />
