@@ -1,9 +1,11 @@
 #pragma once
 #include <afxwin.h>
 #include <functional>
+#include "services/TrayIcon.h"
 
 // Hidden top-level message-owner window: owns app lifetime, receives global
-// hotkeys, and (from Task 11) hosts the set of note windows. P2 scaffold.
+// hotkeys, and hosts the tray icon. Hotkey registration is done externally by
+// HotkeyManager (using this window's HWND); dispatch stays here by id.
 class CAppHostWindow : public CWnd {
 public:
     static const UINT kHotkeyQuit = 1;
@@ -18,9 +20,18 @@ public:
     std::function<void()> onQuit;
     std::function<void()> onToggleManager;
     std::function<void()> onToggleAll;
-    bool Create();                 // create hidden top-level window + register hotkeys
+    std::function<void(bool)> onSetAllVisible;   // 托盘“显示/隐藏全部”
+    std::function<void()> onToggleAutostart;     // 托盘“开机自启”切换
+    std::function<bool()> isAutostartEnabled;    // 菜单勾选状态查询
+    bool Create();                 // create hidden top-level window
+    bool createTray();             // add tray icon (call after Create)
 protected:
     afx_msg void OnHotKey(UINT idHotKey, UINT fuModifiers, UINT vk);
     afx_msg void OnDestroy();
+    afx_msg LRESULT OnTrayCallback(WPARAM wParam, LPARAM lParam);
+    afx_msg LRESULT OnTaskbarCreated(WPARAM wParam, LPARAM lParam);
+    void showTrayMenu();
     DECLARE_MESSAGE_MAP()
+private:
+    TrayIcon m_tray;
 };

@@ -2,6 +2,8 @@
 #include "app/AppPaths.h"
 #include "app/DbBootstrap.h"
 #include "data/NoteStore.h"
+#include "data/SettingsStore.h"
+#include "services/AutostartManager.h"
 #include <gdiplus.h>
 #include <string>
 #include <ctime>
@@ -69,10 +71,26 @@ BOOL CNoteApp::InitInstance() {
     m_main->Create(m_store.get(), this);
     m_main->ShowWindow(SW_SHOW);
     m_host.onToggleManager = [this]{ if (m_main) m_main->ToggleShow(); };
+    m_host.onSetAllVisible = [this](bool show){ setAllNotesVisible(show); if (m_main) m_main->reloadList(); };
+    m_host.onToggleAutostart = []{ own_svc::autostartSetEnabled(!own_svc::autostartIsEnabled()); };
+    m_host.isAutostartEnabled = []{ return own_svc::autostartIsEnabled(); };
 
     if (!m_host.Create())
         return FALSE;
     m_pMainWnd = &m_host;   // hidden host keeps the message loop alive
+
+    // 全局热键：设置驱动、冲突安全地注册（派发仍在 host 的 OnHotKey）
+    {
+        own::SettingsStore settings(m_db);
+        m_hotkeys.add(CAppHostWindow::kHotkeyNew,          "new",           "Ctrl+Alt+N");
+        m_hotkeys.add(CAppHostWindow::kHotkeyNewChecklist, "new_checklist", "Ctrl+Alt+2");
+        m_hotkeys.add(CAppHostWindow::kHotkeyNewDrawing,   "new_drawing",   "Ctrl+Alt+3");
+        m_hotkeys.add(CAppHostWindow::kHotkeyManager,      "manager",       "Ctrl+Alt+M");
+        m_hotkeys.add(CAppHostWindow::kHotkeyToggleAll,    "toggle_all",    "Ctrl+Alt+H");
+        m_hotkeys.add(CAppHostWindow::kHotkeyQuit,         "quit",          "Ctrl+Alt+Q");
+        m_hotkeys.loadAndRegister(m_host.GetSafeHwnd(), settings);
+    }
+    m_host.createTray();
 
     // 显示已有可见 note；首启为空则建欢迎 note
     own::NoteQuery q; q.onlyVisible = true;
@@ -129,6 +147,7 @@ void CNoteApp::setAllNotesVisible(bool show) {
 }
 
 int CNoteApp::ExitInstance() {
+    m_hotkeys.unregisterAll(m_host.GetSafeHwnd());
     m_notes.clear();
     if (m_gdiplusToken) Gdiplus::GdiplusShutdown(m_gdiplusToken);
     if (m_singleton) ::CloseHandle(m_singleton);
