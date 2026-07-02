@@ -1,4 +1,5 @@
 #include "ui/table/TableViewShim.h"
+#include <string>
 
 GlobalGraphicObject m_global_graphic_objects;   // 移入控件引用的全局实例
 BcgpGlobalUtilsShim globalUtils;                // 顶替 BCGP globalUtils
@@ -29,7 +30,15 @@ namespace SWPlotUtil {
 CSize quick_estimate_word_size_with_cache(HDC hdc, const char* text, HFONT hFont) {
     HGDIOBJ old = ::SelectObject(hdc, hFont);
     SIZE sz{ 0,0 };
-    if (text) ::GetTextExtentPoint32A(hdc, text, (int)strlen(text), &sz);
+    // 列名是 UTF-8：转宽字符量宽，否则中文按 ANSI 量得错宽
+    if (text) {
+        int n = ::MultiByteToWideChar(CP_UTF8, 0, text, -1, nullptr, 0);
+        if (n > 1) {
+            std::wstring w(n - 1, L'\0');
+            ::MultiByteToWideChar(CP_UTF8, 0, text, -1, &w[0], n);
+            ::GetTextExtentPoint32W(hdc, w.c_str(), (int)w.size(), &sz);
+        }
+    }
     ::SelectObject(hdc, old);
     return CSize(sz.cx, sz.cy);
 }
@@ -38,7 +47,13 @@ void quick_text(HDC hdc, const char* text, CPoint pt, COLORREF color, HFONT hFon
     HGDIOBJ old = ::SelectObject(hdc, hFont);
     int bk = ::SetBkMode(hdc, TRANSPARENT);
     COLORREF oc = ::SetTextColor(hdc, color);
-    ::TextOutA(hdc, pt.x, pt.y, text, (int)strlen(text));   // caller 预置 x（右对齐传 cx-w）
+    // 文本是 UTF-8：转宽字符再 TextOutW，避免中文按 ANSI 解码乱码
+    int n = ::MultiByteToWideChar(CP_UTF8, 0, text, -1, nullptr, 0);
+    if (n > 1) {
+        std::wstring w(n - 1, L'\0');
+        ::MultiByteToWideChar(CP_UTF8, 0, text, -1, &w[0], n);
+        ::TextOutW(hdc, pt.x, pt.y, w.c_str(), (int)w.size());   // caller 预置 x（右对齐传 cx-w）
+    }
     ::SetTextColor(hdc, oc); ::SetBkMode(hdc, bk); ::SelectObject(hdc, old);
 }
 void quick_fillrect(HDC hdc, CRect rect, HPEN hPen, HBRUSH hBrush, int /*penWidth*/) {
