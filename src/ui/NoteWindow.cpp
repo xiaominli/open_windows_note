@@ -6,7 +6,20 @@
 #include "data/NoteStore.h"
 #include <gdiplus.h>
 #include <ctime>
+#include <imm.h>
+#pragma comment(lib, "imm32.lib")
 using namespace Gdiplus;
+
+// 焦点控件是否正在 IME 组字中：组字期间保存会打断组字（拼音以 ASCII 落地）。
+static bool isImeComposing() {
+    HWND h = ::GetFocus();
+    if (!h) return false;
+    HIMC himc = ::ImmGetContext(h);
+    if (!himc) return false;
+    bool composing = ::ImmGetCompositionStringW(himc, GCS_COMPSTR, nullptr, 0) > 0;
+    ::ImmReleaseContext(h, himc);
+    return composing;
+}
 
 static const own::TitleBarMetrics kTitleMetrics{ 28, 20, 4, 4 };
 
@@ -216,7 +229,7 @@ void CNoteWindow::OnSize(UINT nType, int cx, int cy) {
     layoutContent();
 }
 void CNoteWindow::OnTimer(UINT_PTR id) {
-    if (id == kSaveTimer) flushContent();
+    if (id == kSaveTimer && !isImeComposing()) flushContent();  // 组字中不保存，避免打断 IME
     CWnd::OnTimer(id);
 }
 void CNoteWindow::OnDestroy() {
