@@ -161,3 +161,32 @@ TEST_CASE("reminder update and delete roundtrip") {
     CHECK(s.deleteReminder(r.id));
     CHECK(s.remindersOfNote(nid).empty());
 }
+
+TEST_CASE("themes are seeded and readable") {
+    auto db = freshDb(); own::NoteStore s(db);
+    auto ts = s.allThemes();
+    REQUIRE(ts.size() == 4);
+    CHECK(ts[0].id == 1);
+    CHECK(ts[0].bgColor == 0xFFF7B0u);      // 内置黄
+    CHECK(ts[0].titleColor == 0xF2D24Au);
+    CHECK(ts[0].textColor == 0x202020u);
+    CHECK(ts[0].isBuiltin);
+    auto one = s.getTheme(ts[1].id);
+    REQUIRE(one.has_value());
+    CHECK(one->id == ts[1].id);
+    CHECK(one->bgColor == ts[1].bgColor);
+    CHECK_FALSE(s.getTheme(9999).has_value());
+}
+
+TEST_CASE("updateNoteTheme changes only theme_id") {
+    auto db = freshDb(); own::NoteStore s(db);
+    own::Note n; n.contentBlob = {1,2,3}; n.plainText = "keep";
+    int64_t id = s.insertNote(n, 1000);
+    CHECK(s.updateNoteTheme(id, 3));
+    auto back = s.getNote(id);
+    REQUIRE(back.has_value());
+    CHECK(back->themeId == 3);
+    CHECK(back->plainText == "keep");                 // 其它列不动
+    REQUIRE(back->contentBlob.size() == 3);
+    CHECK(back->contentBlob[2] == 3);
+}

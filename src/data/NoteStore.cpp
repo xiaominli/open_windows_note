@@ -221,5 +221,34 @@ std::vector<Reminder> NoteStore::enabledReminders() {
                      "sound_path,enabled FROM reminders WHERE enabled=1 ORDER BY due_at;");
     std::vector<Reminder> out; while (s.step()) out.push_back(readReminder(s)); return out;
 }
+// ---- themes ----
+static Theme readTheme(Statement& s) {
+    Theme t;
+    t.id = s.columnInt64(0);
+    t.name = s.columnText(1);
+    t.bgColor = (uint32_t)s.columnInt64(2);
+    t.titleColor = (uint32_t)s.columnInt64(3);
+    t.textColor = (uint32_t)s.columnInt64(4);
+    t.isBuiltin = s.columnInt64(5) != 0;
+    return t;
+}
+std::vector<Theme> NoteStore::allThemes() {
+    std::vector<Theme> out;
+    Statement s(db_, "SELECT id,name,bg_color,title_color,text_color,is_builtin FROM themes ORDER BY id;");
+    while (s.step()) out.push_back(readTheme(s));
+    return out;
+}
+std::optional<Theme> NoteStore::getTheme(int64_t id) {
+    Statement s(db_, "SELECT id,name,bg_color,title_color,text_color,is_builtin FROM themes WHERE id=?;");
+    s.bind(1, id);
+    if (!s.step()) return std::nullopt;
+    return readTheme(s);
+}
+bool NoteStore::updateNoteTheme(int64_t noteId, int64_t themeId) {
+    Statement s(db_, "UPDATE notes SET theme_id=? WHERE id=?;");
+    s.bind(1, themeId); s.bind(2, noteId);
+    s.execDone();
+    return true;
+}
 
 } // namespace own

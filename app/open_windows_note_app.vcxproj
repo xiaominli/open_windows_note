@@ -113,6 +113,7 @@
     <ClCompile Include="..\src\domain\StrokesJson.cpp" />
     <ClCompile Include="..\src\domain\NoteListFormat.cpp" />
     <ClCompile Include="..\src\domain\Hotkey.cpp" />
+    <ClCompile Include="..\src\domain\ThemeRules.cpp" />
     <ClCompile Include="..\src\domain\ReminderRules.cpp" />
     <ClCompile Include="..\src\domain\DateTimeText.cpp" />
     <ClCompile Include="..\src\services\HotkeyManager.cpp" />
@@ -167,6 +168,7 @@
     <ClInclude Include="..\src\ui\UiFont.h" />
     <ClInclude Include="..\src\ui\ReminderToast.h" />
     <ClInclude Include="..\src\domain\ReminderRules.h" />
+    <ClInclude Include="..\src\domain\ThemeRules.h" />
     <ClInclude Include="..\src\domain\DateTimeText.h" />
     <ClInclude Include="..\src\services\ReminderScheduler.h" />
   </ItemGroup>
