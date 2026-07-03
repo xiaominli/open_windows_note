@@ -66,6 +66,7 @@ void CTextContentView::Load(const own::Note& note) {
         }
     }
     applyNoteFont(m_edit, SCF_ALL);   // 旧内容 RTF 里带的 System 字体也统一掉
+    ApplyTheme(m_bgRgb, m_textRgb);
     m_edit.SetModify(FALSE);
 }
 bool CTextContentView::Save(std::vector<uint8_t>& outBlob, std::string& outPlain) {
@@ -94,4 +95,16 @@ void CTextContentView::SetVisible(bool show) {
 }
 void CTextContentView::DestroyView() {
     if (m_created) { m_edit.DestroyWindow(); m_created = false; }
+}
+void CTextContentView::ApplyTheme(uint32_t bgRgb, uint32_t textRgb) {
+    if (!m_created) return;
+    m_bgRgb = bgRgb; m_textRgb = textRgb;
+    COLORREF bg = RGB((bgRgb>>16)&0xFF, (bgRgb>>8)&0xFF, bgRgb&0xFF);
+    ::SendMessage(m_edit.GetSafeHwnd(), EM_SETBKGNDCOLOR, 0, (LPARAM)bg);
+    CHARFORMAT2W cf{}; cf.cbSize = sizeof(cf);
+    cf.dwMask = CFM_COLOR;
+    cf.crTextColor = RGB((textRgb>>16)&0xFF, (textRgb>>8)&0xFF, textRgb&0xFF);
+    BOOL mod = m_edit.GetModify();
+    ::SendMessage(m_edit.GetSafeHwnd(), EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&cf);
+    m_edit.SetModify(mod);   // 换色不算脏
 }

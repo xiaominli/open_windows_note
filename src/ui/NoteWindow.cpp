@@ -5,6 +5,7 @@
 #include "domain/Geometry.h"
 #include "domain/NoteListFormat.h"
 #include "data/NoteStore.h"
+#include "domain/ThemeRules.h"
 #include <gdiplus.h>
 #include <ctime>
 #include <imm.h>
@@ -48,6 +49,7 @@ END_MESSAGE_MAP()
 
 bool CNoteWindow::Create(const own::Note& note, own::NoteStore* store) {
     m_note = note; m_store = store;
+    loadTheme();
     // 越界钳制到可见工作区
     own::RectI clamped = own::clampRectToWorkArea(note.rect, own::enumMonitorWorkAreas());
     m_note.rect = clamped;
@@ -65,10 +67,17 @@ bool CNoteWindow::Create(const own::Note& note, own::NoteStore* store) {
         own::RectI cr = own::noteContentRect({0,0,rc.Width(),rc.Height()}, kTitleMetrics.height, 6);
         m_content->Create(this, CRect(cr.x, cr.y, cr.x+cr.w, cr.y+cr.h));
         m_content->Load(m_note);
+        m_content->ApplyTheme(m_theme.bgColor, m_theme.textColor);
         if (m_note.rolledUp) m_content->SetVisible(false);
     }
     SetTimer(kSaveTimer, 800, nullptr);
     return true;
+}
+void CNoteWindow::loadTheme() {
+    m_theme = own::Theme{};                       // 默认即内置黄 {0xFFF7B0,0xF2D24A,0x202020}
+    if (m_store && m_note.themeId != 0) {
+        if (auto t = m_store->getTheme(m_note.themeId)) m_theme = *t;
+    }
 }
 own::TitleBarRects CNoteWindow::layout() const {
     CRect rc; GetClientRect(&rc);
@@ -86,12 +95,12 @@ void CNoteWindow::OnPaint() {
     {
         Graphics g(mem.GetSafeHdc());
         g.SetSmoothingMode(SmoothingModeAntiAlias);
-        // 背景（主题色，暂用 note 的 theme 对应色的简化：黄底，P3/主题接入后替换）
-        SolidBrush bg(Color(255, 0xFF, 0xF7, 0xB0));
+        // 背景（主题色）
+        SolidBrush bg(Color(255, (BYTE)((m_theme.bgColor>>16)&0xFF), (BYTE)((m_theme.bgColor>>8)&0xFF), (BYTE)(m_theme.bgColor&0xFF)));
         g.FillRectangle(&bg, 0, 0, rc.Width(), rc.Height());
         // 标题栏
         auto L = own::layoutTitleBar({0,0,rc.Width(),rc.Height()}, kTitleMetrics);
-        SolidBrush title(Color(255, 0xF2, 0xD2, 0x4A));
+        SolidBrush title(Color(255, (BYTE)((m_theme.titleColor>>16)&0xFF), (BYTE)((m_theme.titleColor>>8)&0xFF), (BYTE)(m_theme.titleColor&0xFF)));
         g.FillRectangle(&title, L.titleBar.x, L.titleBar.y, L.titleBar.w, L.titleBar.h);
         // 按钮图标（简单符号：× 关闭，─ 卷起，pin 小方块，○ 透明）
         Pen pen(Color(255,0x40,0x40,0x40), 2.0f);
@@ -102,6 +111,12 @@ void CNoteWindow::OnPaint() {
         SolidBrush dot(Color(255,0x40,0x40,0x40));
         g.FillRectangle(&dot, L.pinBtn.x+6, L.pinBtn.y+4, 6, L.pinBtn.h-8);
         g.DrawEllipse(&pen, L.opacityBtn.x+3, L.opacityBtn.y+3, L.opacityBtn.w-6, L.opacityBtn.h-6);
+        // 换色按钮：三竖条色板示意
+        SolidBrush c1(Color(255,0xE0,0x60,0x60)), c2(Color(255,0x60,0xB0,0x60)), c3(Color(255,0x60,0x70,0xE0));
+        int tw = (L.themeBtn.w - 8) / 3;
+        g.FillRectangle(&c1, L.themeBtn.x+4,        L.themeBtn.y+4, tw, L.themeBtn.h-8);
+        g.FillRectangle(&c2, L.themeBtn.x+4+tw,     L.themeBtn.y+4, tw, L.themeBtn.h-8);
+        g.FillRectangle(&c3, L.themeBtn.x+4+tw*2,   L.themeBtn.y+4, tw, L.themeBtn.h-8);
         // 标题栏左侧显示便签标题（空内容回落 #id），不浪费拖动区
         {
             std::string t = own::noteTitleText(m_note);
@@ -196,6 +211,18 @@ void CNoteWindow::OnLButtonDown(UINT, CPoint pt) {
             m_note.opacity = steps[(idx+1)%4];
             ::SetLayeredWindowAttributes(m_hWnd, 0, (BYTE)m_note.opacity, LWA_ALPHA);
             if (m_store) m_store->updateFlags(m_note.id, m_note.opacity, m_note.pinned, m_note.rolledUp, m_note.visible);
+            return;
+        }
+        case own::TitleHit::Theme: {
+            if (!m_store) return;
+            auto themes = m_store->allThemes();
+            int64_t next = own::nextThemeId(themes, m_note.themeId);
+            if (next == 0) return;
+            m_note.themeId = next;
+            m_store->updateNoteTheme(m_note.id, next);   // 只写 theme_id，不碰 blob
+            loadTheme();
+            if (m_content) m_content->ApplyTheme(m_theme.bgColor, m_theme.textColor);
+            Invalidate(FALSE);
             return;
         }
         case own::TitleHit::Drag: {

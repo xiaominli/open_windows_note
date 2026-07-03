@@ -14,4 +14,5 @@ public:
     virtual bool IsDirty() const = 0;
     virtual void SetVisible(bool show) = 0;
     virtual void DestroyView() = 0;
+    virtual void ApplyTheme(uint32_t bgRgb, uint32_t textRgb) {}   // 0xRRGGBB；默认忽略
 };

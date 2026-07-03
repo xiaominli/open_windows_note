@@ -63,11 +63,12 @@ void CChecklistContentView::OnPaint() {
     CDC mem; mem.CreateCompatibleDC(&dc);
     CBitmap bmp; bmp.CreateCompatibleBitmap(&dc, rc.Width(), rc.Height());
     CBitmap* old = mem.SelectObject(&bmp);
-    mem.FillSolidRect(&rc, RGB(0xFF, 0xF7, 0xB0));           // 背景（与便签底色一致，主题化留 P4）
+    mem.FillSolidRect(&rc, RGB((m_bgRgb>>16)&0xFF, (m_bgRgb>>8)&0xFF, m_bgRgb&0xFF));   // 背景跟随主题
     CPen pen(PS_SOLID, 1, RGB(0x50, 0x50, 0x50));
     CPen* op = mem.SelectObject(&pen);
     CFont* of = mem.SelectObject(CFont::FromHandle(own_ui::uiFont(14)));   // DC 默认 SYSTEM_FONT 中文发虚
     mem.SetBkMode(TRANSPARENT);
+    mem.SetTextColor(RGB((m_textRgb>>16)&0xFF, (m_textRgb>>8)&0xFF, m_textRgb&0xFF));
     own::RectI content{ 0, 0, rc.Width(), rc.Height() };
     for (size_t i = 0; i < m_items.size(); ++i) {
         own::RectI b = own::checklistBoxRect(content, kMetrics, (int)i);
@@ -127,4 +128,8 @@ void CChecklistContentView::OnLButtonDown(UINT, CPoint pt) {
             beginEdit((int)m_items.size() - 1); break;
         default: break;
     }
+}
+void CChecklistContentView::ApplyTheme(uint32_t bgRgb, uint32_t textRgb) {
+    m_bgRgb = bgRgb; m_textRgb = textRgb;
+    if (m_created) Invalidate(FALSE);
 }

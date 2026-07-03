@@ -10,7 +10,10 @@ public:
     bool IsDirty() const override;
     void SetVisible(bool show) override;
     void DestroyView() override;
+    void ApplyTheme(uint32_t bgRgb, uint32_t textRgb) override;
 private:
     CRichEditCtrl m_edit;
     bool m_created = false;
+    uint32_t m_bgRgb = 0xFFF7B0;
+    uint32_t m_textRgb = 0x202020;
 };

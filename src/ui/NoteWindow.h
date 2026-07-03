@@ -38,4 +38,6 @@ private:
     CRect  m_resizeStartRect;
     int m_expandedHeight = 0;    // 卷起前的展开态高度缓存
     std::unique_ptr<INoteContentView> m_content;
+    own::Theme m_theme;          // 当前生效主题（含回落默认）
+    void loadTheme();            // 按 m_note.themeId 取色，取不到回落内置黄
 };

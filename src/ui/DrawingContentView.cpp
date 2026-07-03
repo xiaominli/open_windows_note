@@ -57,7 +57,7 @@ void CDrawingContentView::OnPaint() {
     CBitmap* old = mem.SelectObject(&bmp);
     {
         Graphics g(mem.GetSafeHdc());
-        g.Clear(Color(255, 0xFF, 0xF7, 0xB0));
+        g.Clear(Color(255, (BYTE)((m_bgRgb>>16)&0xFF), (BYTE)((m_bgRgb>>8)&0xFF), (BYTE)(m_bgRgb&0xFF)));
         // 工具行
         int x = 2;
         for (int i = 0; i < 4; ++i) {
@@ -120,4 +120,8 @@ void CDrawingContentView::OnLButtonUp(UINT, CPoint) {
     if (m_cur.points.size() >= 2) { m_strokes.push_back(m_cur); m_dirty = true; }
     m_cur = own::Stroke{};
     Invalidate(FALSE);
+}
+void CDrawingContentView::ApplyTheme(uint32_t bgRgb, uint32_t) {
+    m_bgRgb = bgRgb;
+    if (m_created) Invalidate(FALSE);
 }

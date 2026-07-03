@@ -12,6 +12,7 @@ public:
     bool IsDirty() const override;
     void SetVisible(bool show) override;
     void DestroyView() override;
+    void ApplyTheme(uint32_t bgRgb, uint32_t textRgb) override;
 protected:
     afx_msg void OnPaint();
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
@@ -29,4 +30,5 @@ private:
     int m_width = 3;
     bool m_dirty = false;
     bool m_created = false;
+    uint32_t m_bgRgb = 0xFFF7B0;
 };
