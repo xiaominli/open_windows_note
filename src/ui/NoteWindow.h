@@ -12,6 +12,8 @@ public:
     bool Create(const own::Note& note, own::NoteStore* store);
     int64_t noteId() const { return m_note.id; }
     void flushNow() { flushContent(); }   // 导出备份前确保最新内容落盘
+    const std::string& stickTarget() const { return m_note.stickTarget; }
+    void setStickyVisible(bool show);    // 贴窗瞬态显隐：不写 visible 标志、不落库
 protected:
     afx_msg void OnPaint();
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);

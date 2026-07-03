@@ -5,6 +5,7 @@
 #include "data/SettingsStore.h"
 #include "data/BackupService.h"
 #include "domain/BackupRules.h"
+#include "domain/StickyRules.h"
 #include "services/AutostartManager.h"
 #include "ui/ReminderToast.h"
 #include "ui/SettingsDialog.h"
@@ -145,6 +146,18 @@ BOOL CNoteApp::InitInstance() {
     }
     for (const auto& n : notes) createAndShowNote(n);
 
+    // 贴窗便签即使当前不可见也要有窗participate（瞬态显隐需要窗存在）
+    {
+        own::NoteQuery qa; auto all = m_store->query(qa);
+        for (const auto& n : all)
+            if (!n.stickTarget.empty() && !findNote(n.id)) createAndShowNote(n);
+    }
+    m_sticky.onForeground = [this](const std::string& t, const std::string& c) {
+        applyStickyVisibility(t, c);
+    };
+    m_sticky.start();                    // 失败即降级：贴窗静默不工作
+    stickyInitialPass();
+
     // 提醒：调度器接线 + host 30s 轮询 + 启动即查一次（错过的过期提醒开机即弹）
     m_reminders.attach(m_store.get());
     m_reminders.onFire = [this](const own::Reminder& r, const own::Note& n) {
@@ -200,6 +213,25 @@ void CNoteApp::setAllNotesVisible(bool show) {
     }
 }
 
+void CNoteApp::applyStickyVisibility(const std::string& titleU8, const std::string& classU8) {
+    for (auto& w : m_notes) {
+        if (!w) continue;
+        const std::string& t = w->stickTarget();
+        if (t.empty()) continue;
+        w->setStickyVisible(own::matchesStickTarget(titleU8, classU8, t));
+    }
+}
+void CNoteApp::stickyInitialPass() {
+    HWND fg = ::GetForegroundWindow();
+    if (!fg) return;
+    DWORD pid = 0; ::GetWindowThreadProcessId(fg, &pid);
+    if (pid == ::GetCurrentProcessId()) { applyStickyVisibility("", ""); return; }  // 自家前台：贴窗先藏
+    wchar_t title[256]{}; int tl = ::GetWindowTextW(fg, title, 256);
+    wchar_t cls[256]{};   int cl = ::GetClassNameW(fg, cls, 256);
+    std::wstring wt(title, title + (tl > 0 ? tl : 0)), wc(cls, cls + (cl > 0 ? cl : 0));
+    applyStickyVisibility(wToU8(wt), wToU8(wc));
+}
+
 void CNoteApp::doExportBackup() {
     for (auto& w : m_notes) if (w) w->flushNow();          // 备份含最新内容
     time_t now = time(nullptr);
@@ -233,6 +265,7 @@ void CNoteApp::doImportBackup() {
         return;
     // 停掉会碰 store 的定时轮询，再拆窗、关库（顺序：先消费方后 DB）
     m_host.onReminderTick = []{};
+    m_sticky.stop();                                        // 拆窗期间不再收前台回调
     m_notes.clear();                                       // 析构链走 flushContent 落盘
     if (m_main) { m_main->DestroyWindow(); m_main.reset(); }
     m_store.reset();
@@ -260,6 +293,7 @@ void CNoteApp::doImportBackup() {
 }
 
 int CNoteApp::ExitInstance() {
+    m_sticky.stop();
     m_hotkeys.unregisterAll(m_host.GetSafeHwnd());
     m_notes.clear();
     if (m_gdiplusToken) Gdiplus::GdiplusShutdown(m_gdiplusToken);

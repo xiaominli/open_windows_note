@@ -10,6 +10,7 @@
 #include "ui/NoteWindow.h"
 #include "services/HotkeyManager.h"
 #include "services/ReminderScheduler.h"
+#include "services/StickyWindowWatcher.h"
 
 // MFC application object. Single global instance `theApp` provides WinMain.
 class CNoteApp : public CWinApp, public INoteWindowHost {
@@ -26,6 +27,8 @@ private:
     CNoteWindow* findNote(int64_t id);   // 在 m_notes 里查；无则 nullptr
     void doExportBackup();
     void doImportBackup();
+    void applyStickyVisibility(const std::string& titleU8, const std::string& classU8);
+    void stickyInitialPass();            // 启动时按当前前台窗做一次显隐
 
     own::Database  m_db;
     std::unique_ptr<own::NoteStore> m_store;
@@ -34,6 +37,7 @@ private:
     HotkeyManager  m_hotkeys;
     ReminderScheduler m_reminders;   // 注意：声明在 m_host/m_store 之后，先于二者析构；
                                      // 若未来加析构逻辑勿在其中触碰 store/host
+    StickyWindowWatcher m_sticky;    // 声明在 m_notes 之前无妨：ExitInstance 显式 stop
     ULONG_PTR      m_gdiplusToken = 0;
     HANDLE         m_singleton = nullptr;
     bool           m_allShown = true;

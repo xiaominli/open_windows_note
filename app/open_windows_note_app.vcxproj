@@ -123,6 +123,7 @@
     <ClCompile Include="..\src\services\AutostartManager.cpp" />
     <ClCompile Include="..\src\services\TrayIcon.cpp" />
     <ClCompile Include="..\src\services\ReminderScheduler.cpp" />
+    <ClCompile Include="..\src\services\StickyWindowWatcher.cpp" />
     <ClCompile Include="..\src\ui\TitleBarLayout.cpp" />
     <ClCompile Include="..\src\ui\FormatBarLayout.cpp" />
     <ClCompile Include="..\src\ui\ResizeMath.cpp" />
@@ -180,6 +181,7 @@
     <ClInclude Include="..\src\domain\BackupRules.h" />
     <ClInclude Include="..\src\domain\DateTimeText.h" />
     <ClInclude Include="..\src\services\ReminderScheduler.h" />
+    <ClInclude Include="..\src\services\StickyWindowWatcher.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

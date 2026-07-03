@@ -341,3 +341,8 @@ void CNoteWindow::OnDestroy() {
     if (m_content) { m_content->DestroyView(); m_content.reset(); }
     CWnd::OnDestroy();
 }
+void CNoteWindow::setStickyVisible(bool show) {
+    if (!GetSafeHwnd()) return;
+    if (!!IsWindowVisible() == show) return;
+    ShowWindow(show ? SW_SHOWNOACTIVATE : SW_HIDE);
+}
