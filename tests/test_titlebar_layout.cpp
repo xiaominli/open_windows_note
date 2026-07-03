@@ -28,3 +28,10 @@ TEST_CASE("hit test maps points to controls") {
     CHECK(own::hitTestTitleBar(r, 10, 10) == TitleHit::Drag);      // 左侧空白=拖动
     CHECK(own::hitTestTitleBar(r, 10, 100) == TitleHit::None);     // 内容区
 }
+TEST_CASE("theme button sits left of opacity and hit-tests") {
+    auto r = mk();
+    CHECK(r.themeBtn.w == 20);
+    CHECK(r.themeBtn.x < r.opacityBtn.x);                       // 从右数第 5 个
+    CHECK(r.dragArea.x + r.dragArea.w <= r.themeBtn.x);         // 拖动区不与按钮重叠
+    CHECK(own::hitTestTitleBar(r, r.themeBtn.x+2, r.themeBtn.y+2) == TitleHit::Theme);
+}

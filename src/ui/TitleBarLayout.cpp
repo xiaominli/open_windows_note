@@ -13,7 +13,8 @@ TitleBarRects layoutTitleBar(RectI client, TitleBarMetrics m) {
     place(r.rollBtn);
     place(r.pinBtn);
     place(r.opacityBtn);
-    int dragRight = r.opacityBtn.x - m.btnGap;          // 拖动区到最左钮之前
+    place(r.themeBtn);
+    int dragRight = r.themeBtn.x - m.btnGap;            // 拖动区到最左钮之前
     r.dragArea = { client.x, client.y, dragRight - client.x, m.height };
     return r;
 }
@@ -22,6 +23,7 @@ TitleHit hitTestTitleBar(const TitleBarRects& r, int px, int py) {
     if (inRect(r.rollBtn, px, py))    return TitleHit::Roll;
     if (inRect(r.pinBtn, px, py))     return TitleHit::Pin;
     if (inRect(r.opacityBtn, px, py)) return TitleHit::Opacity;
+    if (inRect(r.themeBtn, px, py))   return TitleHit::Theme;
     if (inRect(r.dragArea, px, py))   return TitleHit::Drag;
     return TitleHit::None;
 }
