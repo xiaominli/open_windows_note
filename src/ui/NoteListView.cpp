@@ -163,6 +163,11 @@ void CNoteListView::onContextMenu(int row) {
     if (cur) remLabel += _T(" (") + u8ToWide(own::formatLocalDateTime(cur->dueAt)) + _T(")");
     menu.AppendMenu(MF_POPUP, (UINT_PTR)rem.GetSafeHmenu(), remLabel);
 
+    menu.AppendMenu(MF_STRING, 430,
+        note->stickTarget.empty()
+            ? _T("\x8D34\x5230\x7A97\x53E3\x2026")                                    // 贴到窗口…
+            : _T("\x8D34\x5230\x7A97\x53E3\xFF08\x5DF2\x8BBE\xFF09\x2026"));          // 贴到窗口（已设）…
+
     menu.AppendMenu(MF_SEPARATOR, 0, _T(""));
     menu.AppendMenu(MF_STRING, 3, _T("\x5220\x9664"));                    // 删除
 
@@ -235,4 +240,16 @@ void CNoteListView::onContextMenu(int row) {
         reload();
     }
     else if (cmd == 419 && cur) { m_store->deleteReminder(cur->id); reload(); }
+    else if (cmd == 430) {                          // 贴到窗口：输入标题子串或 class:类名；空=取消贴窗
+        CString io = u8ToWide(note->stickTarget);
+        if (own_ui::promptText(m_table, _T("\x7A97\x53E3\x6807\x9898\x5B50\x4E32\x6216 class:\x7C7B\x540D\xFF08\x7A7A=\x53D6\x6D88\xFF09"), io)) {  // 窗口标题子串或 class:类名（空=取消）
+            std::string t = wideToU8(io);
+            m_store->updateNoteStick(id, t);        // 只写 stick_target，不碰 blob
+            if (m_host) {
+                m_host->refreshNoteWindow(id);      // 开着则重开取新 target
+                if (!t.empty()) m_host->openOrFocusNote(id);   // 没开则建窗以参与贴窗显隐
+            }
+            reload();
+        }
+    }
 }
