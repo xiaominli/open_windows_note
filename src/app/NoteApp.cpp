@@ -243,11 +243,12 @@ void CNoteApp::doExportBackup() {
                     _T("SQLite \x6570\x636E\x5E93 (*.db)|*.db|\x5168\x90E8\x6587\x4EF6 (*.*)|*.*||"));  // 数据库/全部文件
     if (dlg.DoModal() != IDOK) return;
     std::string dest = wToU8((LPCWSTR)dlg.GetPathName());
+    ::DeleteFileW(u8ToW(dest).c_str());   // 覆盖已在对话框确认；宽字符删除（中文路径安全）
     std::string err;
     if (own::exportBackup(m_db, dest, &err)) {
         AfxMessageBox(_T("\x5BFC\x51FA\x6210\x529F") + CString(_T("\x3002")));         // 导出成功。
     } else {
-        AfxMessageBox(_T("\x5BFC\x51FA\x5931\x8D25\xFF1A") + CString(err.c_str()));    // 导出失败：
+        AfxMessageBox(_T("\x5BFC\x51FA\x5931\x8D25\xFF1A") + CString(u8ToW(err).c_str()));    // 导出失败：
     }
 }
 void CNoteApp::doImportBackup() {
@@ -257,7 +258,7 @@ void CNoteApp::doImportBackup() {
     std::string src = wToU8((LPCWSTR)dlg.GetPathName());
     std::string err;
     if (!own::validateBackupFile(src, &err)) {
-        AfxMessageBox(_T("\x65E0\x6548\x7684\x5907\x4EFD\x6587\x4EF6\xFF1A") + CString(err.c_str()));  // 无效的备份文件：
+        AfxMessageBox(_T("\x65E0\x6548\x7684\x5907\x4EFD\x6587\x4EF6\xFF1A") + CString(u8ToW(err).c_str()));  // 无效的备份文件：
         return;
     }
     if (AfxMessageBox(_T("\x5BFC\x5165\x5C06\x66FF\x6362\x5F53\x524D\x5168\x90E8\x6570\x636E\x5E76\x91CD\x542F\x5E94\x7528\xFF0C\x662F\x5426\x7EE7\x7EED\xFF1F"),  // 导入将替换当前全部数据并重启应用，是否继续？
@@ -265,6 +266,10 @@ void CNoteApp::doImportBackup() {
         return;
     // 停掉会碰 store 的定时轮询，再拆窗、关库（顺序：先消费方后 DB）
     m_host.onReminderTick = []{};
+    m_hotkeys.unregisterAll(m_host.GetSafeHwnd());     // 弹错误框时消息泵仍在转：热键/托盘不得再碰已拆的 store
+    m_host.onNewNote = nullptr; m_host.onNewChecklist = nullptr; m_host.onNewDrawing = nullptr;
+    m_host.onToggleAll = nullptr; m_host.onSetAllVisible = nullptr; m_host.onToggleManager = nullptr;
+    m_host.onOpenSettings = nullptr; m_host.onExportBackup = nullptr; m_host.onImportBackup = nullptr;
     m_sticky.stop();                                        // 拆窗期间不再收前台回调
     m_notes.clear();                                       // 析构链走 flushContent 落盘
     if (m_main) { m_main->DestroyWindow(); m_main.reset(); }

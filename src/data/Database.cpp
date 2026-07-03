@@ -20,6 +20,17 @@ bool Database::open(const std::string& path, std::string* err) {
     return true;
 }
 
+bool Database::openReadonly(const std::string& path, std::string* err) {
+    close();
+    int rc = sqlite3_open_v2(path.c_str(), &db_, SQLITE_OPEN_READONLY, nullptr);
+    if (rc != SQLITE_OK) {
+        if (err) *err = db_ ? sqlite3_errmsg(db_) : "cannot open";
+        close();
+        return false;
+    }
+    return true;
+}
+
 bool Database::exec(const std::string& sql, std::string* err) {
     char* msg = nullptr;
     int rc = sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &msg);

@@ -29,14 +29,16 @@ TEST_CASE("exportBackup writes a valid, openable backup with data") {
     back.close();
     std::remove(kTmp);
 }
-TEST_CASE("exportBackup overwrites an existing destination") {
+TEST_CASE("exportBackup requires a non-existing destination") {
     std::remove(kTmp);
     { FILE* f = fopen(kTmp, "wb"); REQUIRE(f); fputs("junk", f); fclose(f); }
     own::Database db;
     std::string err;
     REQUIRE(db.open(":memory:", &err));
     REQUIRE(own::migrate(db, &err));
-    CHECK(own::exportBackup(db, kTmp, &err));
+    CHECK_FALSE(own::exportBackup(db, kTmp, &err));   // dest exists -> VACUUM INTO fails
+    std::remove(kTmp);
+    CHECK(own::exportBackup(db, kTmp, &err));         // caller removed it -> succeeds
     CHECK(own::validateBackupFile(kTmp, &err));
     std::remove(kTmp);
 }
