@@ -242,7 +242,7 @@ void CNoteListView::onContextMenu(int row) {
     else if (cmd == 419 && cur) { m_store->deleteReminder(cur->id); reload(); }
     else if (cmd == 430) {                          // 贴到窗口：输入标题子串或 class:类名；空=取消贴窗
         CString io = u8ToWide(note->stickTarget);
-        if (own_ui::promptText(m_table, _T("\x7A97\x53E3\x6807\x9898\x5B50\x4E32\x6216 class:\x7C7B\x540D\xFF08\x7A7A=\x53D6\x6D88\xFF09"), io)) {  // 窗口标题子串或 class:类名（空=取消）
+        if (own_ui::promptText(m_table, _T("\x7A97\x53E3\x6807\x9898\x5B50\x4E32\x6216 class:\x7C7B\x540D\xFF08\x7A7A=\x53D6\x6D88\xFF09"), io, true)) {  // 窗口标题子串或 class:类名（空=取消）
             std::string t = wideToU8(io);
             m_store->updateNoteStick(id, t);        // 只写 stick_target，不碰 blob
             if (m_host) {

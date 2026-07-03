@@ -15,7 +15,7 @@ public:
     }
     void PostNcDestroy() override {}   // 栈上对象，禁止 delete this
 };
-bool promptText(CWnd* parent, const CString& title, CString& io) {
+bool promptText(CWnd* parent, const CString& title, CString& io, bool allowEmpty) {
     CPromptWnd w;
     LPCTSTR cls = AfxRegisterWndClass(0, ::LoadCursor(nullptr, IDC_ARROW), (HBRUSH)(COLOR_BTNFACE+1));
     CRect r(0, 0, 300, 90);
@@ -41,6 +41,6 @@ bool promptText(CWnd* parent, const CString& title, CString& io) {
     if (parent) parent->EnableWindow(TRUE);
     if (w.m_ok) w.m_edit.GetWindowText(io);
     w.DestroyWindow();
-    return w.m_ok && !io.IsEmpty();
+    return w.m_ok && (allowEmpty || !io.IsEmpty());
 }
 }
