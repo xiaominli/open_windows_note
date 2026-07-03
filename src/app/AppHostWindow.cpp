@@ -72,6 +72,7 @@ void CAppHostWindow::showTrayMenu() {
 }
 
 void CAppHostWindow::OnDestroy() {
+    KillTimer(kReminderTimerId);   // 显式清理（窗口销毁本会自动杀，防御式）
     m_tray.remove();
     CWnd::OnDestroy();
 }

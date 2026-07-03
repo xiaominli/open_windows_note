@@ -77,3 +77,12 @@ TEST_CASE("pickDueReminders filters not-due and skip ids") {
     REQUIRE(due.size() == 1);
     CHECK(due[0].id == 1);
 }
+
+TEST_CASE("resolveReminderDismiss disables reminder when recurrence value is corrupt") {
+    // DB 腐坏契约：computeNextDue 对未知 recurrence 返回 0 -> 兜底禁用
+    own::Reminder r; r.dueAt = 1000; r.enabled = true; r.snoozeUntil = 500;
+    r.recurrence = (own::Recurrence)99;
+    auto x = own::resolveReminderDismiss(r, 1000);
+    CHECK_FALSE(x.enabled);
+    CHECK(x.snoozeUntil == 0);
+}

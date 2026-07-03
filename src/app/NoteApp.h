@@ -30,7 +30,8 @@ private:
     CAppHostWindow m_host;
     std::unique_ptr<CMainFrame> m_main;
     HotkeyManager  m_hotkeys;
-    ReminderScheduler m_reminders;
+    ReminderScheduler m_reminders;   // 注意：声明在 m_host/m_store 之后，先于二者析构；
+                                     // 若未来加析构逻辑勿在其中触碰 store/host
     ULONG_PTR      m_gdiplusToken = 0;
     HANDLE         m_singleton = nullptr;
     bool           m_allShown = true;

@@ -5,6 +5,7 @@
 #include "domain/DateTimeText.h"
 #include <ctime>
 #include <map>
+#include <set>
 
 static uint32_t typeMarkerColor(own::NoteType t) {
     switch (t) {
@@ -48,13 +49,14 @@ void CNoteListView::reload() {
     own::sortNoteRows(notes, m_sortKey, m_sortOrder);
     std::map<int64_t, std::string> gname;
     for (const auto& g : m_store->allGroups()) gname[g.id] = g.name;
+    std::set<int64_t> remNotes;   // 一次查询代替每行 remindersOfNote（N+1）
+    for (const auto& rem : m_store->enabledReminders()) remNotes.insert(rem.noteId);
     int64_t now = (int64_t)time(nullptr);
     m_rows.clear();
     for (const auto& n : notes) {
         Row r; r.note = n;
         r.title = own::noteTitleText(n);
-        for (const auto& rem : m_store->remindersOfNote(n.id))
-            if (rem.enabled) { r.title = "\xE2\x8F\xB0 " + r.title; break; }   // ⏰ 有提醒
+        if (remNotes.count(n.id)) r.title = "\xE2\x8F\xB0 " + r.title;   // ⏰ 有提醒
         auto it = gname.find(n.groupId);
         r.group = (n.groupId != 0 && it != gname.end()) ? it->second : "";
         std::string tags;
