@@ -21,7 +21,7 @@ static bool isImeComposing() {
     return composing;
 }
 
-static const own::TitleBarMetrics kTitleMetrics{ 28, 20, 4, 4 };
+static const own::TitleBarMetrics kTitleMetrics{ 28, 16, 4, 4 };   // btnSize 20→16：按钮再小一点
 
 BEGIN_MESSAGE_MAP(CNoteWindow, CWnd)
     ON_WM_PAINT()
