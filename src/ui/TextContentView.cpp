@@ -21,13 +21,15 @@ DWORD CALLBACK streamOutCb(DWORD_PTR cookie, LPBYTE src, LONG cb, LONG* pcb) {
     return 0;
 }
 // RichEdit 不设置字体时用系统默认（System 点阵字体），中文渲染发虚。
-// scope = SCF_DEFAULT（新输入）或 SCF_ALL（整篇统一；当前无格式工具条，安全）。
+// scope = SCF_DEFAULT（新输入）或 SCF_ALL（整篇统一字体族；不动字号/颜色/加粗——用户格式保真）。
+static int s_defaultFontTwips = 200;                 // 10pt；SetDefaultFontPt 更新
+// scope=SCF_DEFAULT 时含字号；SCF_ALL（整篇归一）只统一字体族，保住用户改过的字号
 static void applyNoteFont(CRichEditCtrl& edit, WPARAM scope) {
     CHARFORMAT2W cf{};
     cf.cbSize = sizeof(cf);
-    cf.dwMask = CFM_FACE | CFM_SIZE | CFM_CHARSET;
+    cf.dwMask = CFM_FACE | CFM_CHARSET;
+    if (scope == SCF_DEFAULT) { cf.dwMask |= CFM_SIZE; cf.yHeight = s_defaultFontTwips; }
     wcscpy_s(cf.szFaceName, L"微软雅黑");   // 微软雅黑
-    cf.yHeight = 200;                        // 10pt（twip）
     cf.bCharSet = DEFAULT_CHARSET;
     ::SendMessage(edit.GetSafeHwnd(), EM_SETCHARFORMAT, scope, (LPARAM)&cf);
 }
@@ -65,7 +67,7 @@ void CTextContentView::Load(const own::Note& note) {
             m_edit.SetWindowText(CString(s.c_str()));
         }
     }
-    applyNoteFont(m_edit, SCF_ALL);   // 旧内容 RTF 里带的 System 字体也统一掉
+    applyNoteFont(m_edit, SCF_ALL);   // 整篇统一字体族（不动字号/颜色/加粗——用户格式保真）
     ApplyTheme(m_bgRgb, m_textRgb);
     m_edit.SetModify(FALSE);
 }
@@ -105,6 +107,52 @@ void CTextContentView::ApplyTheme(uint32_t bgRgb, uint32_t textRgb) {
     cf.dwMask = CFM_COLOR;
     cf.crTextColor = RGB((textRgb>>16)&0xFF, (textRgb>>8)&0xFF, textRgb&0xFF);
     BOOL mod = m_edit.GetModify();
-    ::SendMessage(m_edit.GetSafeHwnd(), EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&cf);
+    // 文字色只设默认格式：字符级颜色（工具条设置）在换主题后保留；
+    // 4 套内置主题 textColor 相同，因此已有文字无需跟随
+    ::SendMessage(m_edit.GetSafeHwnd(), EM_SETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf);
     m_edit.SetModify(mod);   // 换色不算脏
+}
+void CTextContentView::SetDefaultFontPt(int pt) {
+    if (pt >= 8 && pt <= 24) s_defaultFontTwips = pt * 20;
+}
+void CTextContentView::ApplyFormat(own::FmtOp op) {
+    if (!m_created) return;
+    CHARFORMAT2W cf{}; cf.cbSize = sizeof(cf);
+    m_edit.GetSelectionCharFormat(cf);
+    CHARFORMAT2W set{}; set.cbSize = sizeof(set);
+    auto toggle = [&](DWORD effect) {
+        set.dwMask = (effect == CFE_BOLD) ? CFM_BOLD
+                   : (effect == CFE_ITALIC) ? CFM_ITALIC
+                   : (effect == CFE_UNDERLINE) ? CFM_UNDERLINE : CFM_STRIKEOUT;
+        // 选区内混合（mask 未含该位）按「未开」处理 -> 统一打开
+        bool on = (cf.dwMask & set.dwMask) && (cf.dwEffects & effect);
+        set.dwEffects = on ? 0 : effect;
+    };
+    switch (op) {
+        case own::FmtOp::Bold:      toggle(CFE_BOLD); break;
+        case own::FmtOp::Italic:    toggle(CFE_ITALIC); break;
+        case own::FmtOp::Underline: toggle(CFE_UNDERLINE); break;
+        case own::FmtOp::Strike:    toggle(CFE_STRIKEOUT); break;
+        case own::FmtOp::SizeUp:
+        case own::FmtOp::SizeDown: {
+            int cur = (cf.dwMask & CFM_SIZE) ? (int)cf.yHeight : s_defaultFontTwips;  // 混合选区从默认起步
+            set.dwMask = CFM_SIZE;
+            set.yHeight = own::fontSizeStep(cur, op == own::FmtOp::SizeUp);
+            break;
+        }
+        case own::FmtOp::TextColor: {
+            uint32_t curRgb = 0xFFFFFFFF;                    // 无效值 -> 调色板回落首色
+            if ((cf.dwMask & CFM_COLOR) && !(cf.dwEffects & CFE_AUTOCOLOR)) {
+                COLORREF c = cf.crTextColor;                 // COLORREF 是 0xBBGGRR，转回 0xRRGGBB
+                curRgb = ((uint32_t)GetRValue(c) << 16) | ((uint32_t)GetGValue(c) << 8) | GetBValue(c);
+            }
+            uint32_t next = own::nextPaletteColor(curRgb);
+            set.dwMask = CFM_COLOR;
+            set.crTextColor = RGB((next >> 16) & 0xFF, (next >> 8) & 0xFF, next & 0xFF);
+            break;
+        }
+    }
+    m_edit.SetSelectionCharFormat(set);
+    m_edit.SetModify(TRUE);                                  // 格式变更计脏，随 800ms 自动保存落盘
+    m_edit.SetFocus();                                       // 点工具条后焦点还给编辑器
 }

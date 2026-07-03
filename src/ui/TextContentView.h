@@ -11,6 +11,8 @@ public:
     void SetVisible(bool show) override;
     void DestroyView() override;
     void ApplyTheme(uint32_t bgRgb, uint32_t textRgb) override;
+    void ApplyFormat(own::FmtOp op) override;
+    static void SetDefaultFontPt(int pt);          // 默认字号（新输入生效；启动/设置变更时调用）
 private:
     CRichEditCtrl m_edit;
     bool m_created = false;

@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdint>
 #include "domain/Models.h"
+#include "ui/FormatBarLayout.h"
 class INoteContentView {
 public:
     virtual ~INoteContentView() {}
@@ -15,4 +16,5 @@ public:
     virtual void SetVisible(bool show) = 0;
     virtual void DestroyView() = 0;
     virtual void ApplyTheme(uint32_t bgRgb, uint32_t textRgb) {}   // 0xRRGGBB；默认忽略
+    virtual void ApplyFormat(own::FmtOp op) {}                     // 选区格式；默认忽略（清单/涂鸦）
 };
