@@ -55,6 +55,7 @@ void CAppHostWindow::showTrayMenu() {
     menu.AppendMenu(MF_SEPARATOR, 0, _T(""));
     UINT autostartFlag = MF_STRING | ((isAutostartEnabled && isAutostartEnabled()) ? MF_CHECKED : MF_UNCHECKED);
     menu.AppendMenu(autostartFlag, 5, _T("\x5F00\x673A\x81EA\x542F"));     // 开机自启
+    menu.AppendMenu(MF_STRING, 7, _T("\x8BBE\x7F6E\x2026"));               // 设置…
     menu.AppendMenu(MF_SEPARATOR, 0, _T(""));
     menu.AppendMenu(MF_STRING, 6, _T("\x9000\x51FA"));                     // 退出
     CPoint pt; ::GetCursorPos(&pt);
@@ -68,6 +69,7 @@ void CAppHostWindow::showTrayMenu() {
         case 4: if (onSetAllVisible) onSetAllVisible(false); break;
         case 5: if (onToggleAutostart) onToggleAutostart(); break;
         case 6: if (onQuit) onQuit(); break;
+        case 7: if (onOpenSettings) onOpenSettings(); break;
     }
 }
 

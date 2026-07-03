@@ -23,6 +23,7 @@ public:
     std::function<void(bool)> onSetAllVisible;   // 托盘“显示/隐藏全部”
     std::function<void()> onToggleAutostart;     // 托盘“开机自启”切换
     std::function<bool()> isAutostartEnabled;    // 菜单勾选状态查询
+    std::function<void()> onOpenSettings;        // 托盘「设置…」
     static const UINT kReminderTimerId = 1;
     std::function<void()> onReminderTick;        // 30s 提醒轮询滴答
     void startReminderTimer();

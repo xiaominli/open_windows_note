@@ -5,6 +5,7 @@
 #include "data/SettingsStore.h"
 #include "services/AutostartManager.h"
 #include "ui/ReminderToast.h"
+#include "ui/SettingsDialog.h"
 #include <gdiplus.h>
 #include <string>
 #include <ctime>
@@ -42,6 +43,9 @@ BOOL CNoteApp::InitInstance() {
     m_host.onNewNote = [this]{
         own::Note n; n.type = own::NoteType::RichText; n.visible = true;
         n.plainText = "new note";
+        own::SettingsStore st(m_db);
+        n.themeId = st.getInt("default_theme_id", 0);
+        n.opacity = st.getInt("default_opacity", 255);
         int64_t id = m_store->insertNote(n, (int64_t)time(nullptr));
         auto full = m_store->getNote(id);
         if (full) createAndShowNote(*full);
@@ -49,6 +53,9 @@ BOOL CNoteApp::InitInstance() {
     };
     m_host.onNewChecklist = [this]{
         own::Note n; n.type = own::NoteType::Checklist; n.visible = true;
+        own::SettingsStore st(m_db);
+        n.themeId = st.getInt("default_theme_id", 0);
+        n.opacity = st.getInt("default_opacity", 255);
         int64_t id = m_store->insertNote(n, (int64_t)time(nullptr));
         auto full = m_store->getNote(id);
         if (full) createAndShowNote(*full);
@@ -56,6 +63,9 @@ BOOL CNoteApp::InitInstance() {
     };
     m_host.onNewDrawing = [this]{
         own::Note n; n.type = own::NoteType::Drawing; n.visible = true;
+        own::SettingsStore st(m_db);
+        n.themeId = st.getInt("default_theme_id", 0);
+        n.opacity = st.getInt("default_opacity", 255);
         int64_t id = m_store->insertNote(n, (int64_t)time(nullptr));
         auto full = m_store->getNote(id);
         if (full) createAndShowNote(*full);
@@ -76,6 +86,9 @@ BOOL CNoteApp::InitInstance() {
     m_host.onSetAllVisible = [this](bool show){ setAllNotesVisible(show); if (m_main) m_main->reloadList(); };
     m_host.onToggleAutostart = []{ own_svc::autostartSetEnabled(!own_svc::autostartIsEnabled()); };
     m_host.isAutostartEnabled = []{ return own_svc::autostartIsEnabled(); };
+    m_host.onOpenSettings = [this]{
+        own_ui::showSettingsDialog(m_db, *m_store, m_hotkeys, m_host.GetSafeHwnd());
+    };
 
     if (!m_host.Create())
         return FALSE;
