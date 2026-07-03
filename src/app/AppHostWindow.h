@@ -23,11 +23,15 @@ public:
     std::function<void(bool)> onSetAllVisible;   // 托盘“显示/隐藏全部”
     std::function<void()> onToggleAutostart;     // 托盘“开机自启”切换
     std::function<bool()> isAutostartEnabled;    // 菜单勾选状态查询
+    static const UINT kReminderTimerId = 1;
+    std::function<void()> onReminderTick;        // 30s 提醒轮询滴答
+    void startReminderTimer();
     bool Create();                 // create hidden top-level window
     bool createTray();             // add tray icon (call after Create)
 protected:
     afx_msg void OnHotKey(UINT idHotKey, UINT fuModifiers, UINT vk);
     afx_msg void OnDestroy();
+    afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg LRESULT OnTrayCallback(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnTaskbarCreated(WPARAM wParam, LPARAM lParam);
     void showTrayMenu();

@@ -7,6 +7,7 @@ static UINT WM_TASKBARCREATED = ::RegisterWindowMessageW(L"TaskbarCreated");
 BEGIN_MESSAGE_MAP(CAppHostWindow, CWnd)
     ON_WM_HOTKEY()
     ON_WM_DESTROY()
+    ON_WM_TIMER()
     ON_MESSAGE(WM_TRAY_CALLBACK, &CAppHostWindow::OnTrayCallback)
     ON_REGISTERED_MESSAGE(WM_TASKBARCREATED, &CAppHostWindow::OnTaskbarCreated)
 END_MESSAGE_MAP()
@@ -73,4 +74,15 @@ void CAppHostWindow::showTrayMenu() {
 void CAppHostWindow::OnDestroy() {
     m_tray.remove();
     CWnd::OnDestroy();
+}
+
+void CAppHostWindow::startReminderTimer() {
+    SetTimer(kReminderTimerId, 30 * 1000, nullptr);   // 规格 §5：UI 线程 SetTimer 轮询
+}
+void CAppHostWindow::OnTimer(UINT_PTR nIDEvent) {
+    if (nIDEvent == kReminderTimerId) {
+        if (onReminderTick) onReminderTick();
+        return;
+    }
+    CWnd::OnTimer(nIDEvent);
 }

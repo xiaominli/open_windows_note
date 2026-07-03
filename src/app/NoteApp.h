@@ -9,6 +9,7 @@
 #include "data/NoteStore.h"
 #include "ui/NoteWindow.h"
 #include "services/HotkeyManager.h"
+#include "services/ReminderScheduler.h"
 
 // MFC application object. Single global instance `theApp` provides WinMain.
 class CNoteApp : public CWinApp, public INoteWindowHost {
@@ -29,6 +30,7 @@ private:
     CAppHostWindow m_host;
     std::unique_ptr<CMainFrame> m_main;
     HotkeyManager  m_hotkeys;
+    ReminderScheduler m_reminders;
     ULONG_PTR      m_gdiplusToken = 0;
     HANDLE         m_singleton = nullptr;
     bool           m_allShown = true;
