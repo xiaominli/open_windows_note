@@ -31,7 +31,8 @@ public:
     CRect rowRect(int i) const { return CRect(kPad, kPad + i * kRowH, kWidth - kPad, kPad + (i + 1) * kRowH - 4); }
 
     BOOL PreTranslateMessage(MSG* m) override {
-        if (m->message == WM_KEYDOWN && m->wParam == VK_ESCAPE) { done = true; return TRUE; }
+        if (m->message == WM_KEYDOWN && m->wParam == VK_ESCAPE
+            && (m->hwnd == m_hWnd || ::IsChild(m_hWnd, m->hwnd))) { done = true; return TRUE; }
         return CWnd::PreTranslateMessage(m);
     }
     void PostNcDestroy() override {}                  // 栈对象
@@ -103,17 +104,21 @@ BEGIN_MESSAGE_MAP(CSettingsWnd, CWnd)
     ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
+static CSettingsWnd* s_open = nullptr;                    // 重入守卫：防止设置窗口被打开多次
+
 void showSettingsDialog(own::Database& db, own::NoteStore& store,
                         HotkeyManager& hotkeys, HWND hotkeyHwnd) {
+    if (s_open && s_open->GetSafeHwnd()) { s_open->SetForegroundWindow(); return; }
     CSettingsWnd w;
     w.db = &db; w.store = &store; w.hotkeys = &hotkeys; w.hotkeyHwnd = hotkeyHwnd;
     LPCTSTR cls = AfxRegisterWndClass(0, ::LoadCursor(nullptr, IDC_ARROW));
     int h = kPad * 2 + w.rowCount() * kRowH + 30;
     CRect r(0, 0, kWidth, h);
     r.OffsetRect(400, 260);
-    w.CreateEx(WS_EX_TOPMOST | WS_EX_DLGMODALFRAME, cls,
+    if (!w.CreateEx(WS_EX_TOPMOST | WS_EX_DLGMODALFRAME, cls,
                _T("\x8BBE\x7F6E"),                                   // 设置
-               WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE, r, nullptr, 0);
+               WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE, r, nullptr, 0)) return;
+    s_open = &w;
     MSG msg;
     for (;;) {
         if (w.done) break;
@@ -127,6 +132,7 @@ void showSettingsDialog(own::Database& db, own::NoteStore& store,
         if (!w.PreTranslateMessage(&msg)) { ::TranslateMessage(&msg); ::DispatchMessage(&msg); }
     }
     w.DestroyWindow();
+    s_open = nullptr;
 }
 
 } // namespace own_ui
