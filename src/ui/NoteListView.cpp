@@ -2,6 +2,7 @@
 #include "ui/TextPrompt.h"
 #include "app/NoteWindowHost.h"
 #include "data/NoteStore.h"
+#include "domain/DateTimeText.h"
 #include <ctime>
 #include <map>
 
@@ -52,6 +53,8 @@ void CNoteListView::reload() {
     for (const auto& n : notes) {
         Row r; r.note = n;
         r.title = own::noteTitleText(n);
+        for (const auto& rem : m_store->remindersOfNote(n.id))
+            if (rem.enabled) { r.title = "\xE2\x8F\xB0 " + r.title; break; }   // ⏰ 有提醒
         auto it = gname.find(n.groupId);
         r.group = (n.groupId != 0 && it != gname.end()) ? it->second : "";
         std::string tags;
@@ -131,6 +134,33 @@ void CNoteListView::onContextMenu(int row) {
     tag.AppendMenu(MF_STRING, 299, _T("\x65B0\x5EFA\x6807\x7B7E\x2026")); // 新建标签…
     menu.AppendMenu(MF_POPUP, (UINT_PTR)tag.GetSafeHmenu(), _T("\x52A0\x6807\x7B7E")); // 加标签
 
+    // 设提醒 子菜单：预设=401..404，重复=410..413，取消=419
+    auto rems = m_store->remindersOfNote(id);
+    const own::Reminder* cur = nullptr;
+    for (const auto& x : rems) if (x.enabled) { cur = &x; break; }
+    CMenu rem; rem.CreatePopupMenu();
+    rem.AppendMenu(MF_STRING, 401, _T("10 \x5206\x949F\x540E"));                 // 10 分钟后
+    rem.AppendMenu(MF_STRING, 402, _T("1 \x5C0F\x65F6\x540E"));                  // 1 小时后
+    rem.AppendMenu(MF_STRING, 403, _T("\x660E\x5929 9:00"));                     // 明天 9:00
+    rem.AppendMenu(MF_STRING, 404, _T("\x81EA\x5B9A\x4E49\x65F6\x95F4\x2026"));  // 自定义时间…
+    rem.AppendMenu(MF_SEPARATOR, 0, _T(""));
+    UINT recBase = cur ? MF_STRING : (MF_STRING | MF_GRAYED);
+    own::Recurrence curRec = cur ? cur->recurrence : own::Recurrence::None;
+    rem.AppendMenu(recBase | ((cur && curRec == own::Recurrence::None) ? MF_CHECKED : 0),
+                   410, _T("\x4E0D\x91CD\x590D"));                               // 不重复
+    rem.AppendMenu(recBase | (curRec == own::Recurrence::Daily   ? MF_CHECKED : 0),
+                   411, _T("\x6BCF\x5929"));                                     // 每天
+    rem.AppendMenu(recBase | (curRec == own::Recurrence::Weekly  ? MF_CHECKED : 0),
+                   412, _T("\x6BCF\x5468"));                                     // 每周
+    rem.AppendMenu(recBase | (curRec == own::Recurrence::Monthly ? MF_CHECKED : 0),
+                   413, _T("\x6BCF\x6708"));                                     // 每月
+    rem.AppendMenu(MF_SEPARATOR, 0, _T(""));
+    rem.AppendMenu(cur ? MF_STRING : (MF_STRING | MF_GRAYED),
+                   419, _T("\x53D6\x6D88\x63D0\x9192"));                         // 取消提醒
+    CString remLabel = _T("\x8BBE\x63D0\x9192");                                 // 设提醒
+    if (cur) remLabel += _T(" (") + u8ToWide(own::formatLocalDateTime(cur->dueAt)) + _T(")");
+    menu.AppendMenu(MF_POPUP, (UINT_PTR)rem.GetSafeHmenu(), remLabel);
+
     menu.AppendMenu(MF_SEPARATOR, 0, _T(""));
     menu.AppendMenu(MF_STRING, 3, _T("\x5220\x9664"));                    // 删除
 
@@ -168,4 +198,39 @@ void CNoteListView::onContextMenu(int row) {
             m_store->addTagToNote(id, tid); reload();
         }
     }
+    else if (cmd >= 401 && cmd <= 404) {
+        int64_t now = (int64_t)time(nullptr);
+        int64_t due = 0;
+        bool have = false;
+        if (cmd == 401)      { due = now + 600;  have = true; }
+        else if (cmd == 402) { due = now + 3600; have = true; }
+        else if (cmd == 403) { due = own::nextDayAt(now, 9, 0); have = true; }
+        else {                                                    // 404 自定义时间…
+            CString io = u8ToWide(own::formatLocalDateTime(cur ? cur->dueAt : now + 3600));
+            if (own_ui::promptText(m_table,
+                    _T("\x63D0\x9192\x65F6\x95F4 (YYYY-MM-DD HH:MM)"), io)) {    // 提醒时间
+                if (own::parseLocalDateTime(wideToU8(io), due)) have = true;
+                else AfxMessageBox(
+                    _T("\x65F6\x95F4\x683C\x5F0F\x65E0\x6548\x3002\x5E94\x4E3A YYYY-MM-DD HH:MM")); // 时间格式无效。应为…
+            }
+        }
+        if (have) {
+            if (cur) {
+                own::Reminder r = *cur;
+                r.dueAt = due; r.snoozeUntil = 0; r.enabled = true;
+                m_store->updateReminder(r);
+            } else {
+                own::Reminder r; r.noteId = id; r.dueAt = due;
+                m_store->insertReminder(r);
+            }
+            reload();
+        }
+    }
+    else if (cmd >= 410 && cmd <= 413 && cur) {
+        own::Reminder r = *cur;
+        r.recurrence = (own::Recurrence)(cmd - 410);
+        m_store->updateReminder(r);
+        reload();
+    }
+    else if (cmd == 419 && cur) { m_store->deleteReminder(cur->id); reload(); }
 }
