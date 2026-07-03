@@ -6,7 +6,7 @@
 #include <mmsystem.h>
 #include <ctime>
 
-int CReminderToast::s_live = 0;
+std::vector<bool> CReminderToast::s_slotUsed;
 static const int kW = 300, kH = 96;
 
 static CString u8ToWide(const std::string& s) {
@@ -40,12 +40,15 @@ bool CReminderToast::show(const own::Reminder& r, const own::Note& note,
     LPCTSTR cls = AfxRegisterWndClass(0, ::LoadCursor(nullptr, IDC_ARROW));
     RECT wa{ 0, 0, 1280, 800 };
     ::SystemParametersInfoW(SPI_GETWORKAREA, 0, &wa, 0);
-    int slot = s_live;
+    int slot = 0;
+    while (slot < (int)s_slotUsed.size() && s_slotUsed[slot]) ++slot;
+    t->m_slot = slot;
     CRect rc(0, 0, kW, kH);
     rc.OffsetRect(wa.right - kW - 12, wa.bottom - kH - 12 - slot * (kH + 8));
     if (!t->CreateEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW, cls, _T("reminder"),
                      WS_POPUP, rc, nullptr, 0)) { delete t; return false; }
-    ++s_live;
+    if (slot >= (int)s_slotUsed.size()) s_slotUsed.resize(slot + 1, false);
+    s_slotUsed[slot] = true;
     t->ShowWindow(SW_SHOWNOACTIVATE);
     t->UpdateWindow();
     playReminderSound(r.soundPath);
@@ -111,6 +114,6 @@ void CReminderToast::closeToast() {
 }
 
 void CReminderToast::OnDestroy() {
-    --s_live;
+    if (m_slot >= 0 && m_slot < (int)s_slotUsed.size()) s_slotUsed[m_slot] = false;
     CWnd::OnDestroy();
 }

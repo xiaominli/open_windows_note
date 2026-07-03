@@ -1,6 +1,7 @@
 #pragma once
 #include <afxwin.h>
 #include <functional>
+#include <vector>
 #include "domain/Models.h"
 namespace own { class NoteStore; }
 class INoteWindowHost;
@@ -27,5 +28,6 @@ private:
     own::NoteStore* m_store = nullptr;
     INoteWindowHost* m_host = nullptr;
     std::function<void(int64_t)> m_onClosed;
-    static int s_live;               // 存活通知数 → 堆叠槽位
+    int m_slot = -1;                        // 本窗占用的堆叠槽位
+    static std::vector<bool> s_slotUsed;    // 槽位占用表（true=有存活通知）
 };
