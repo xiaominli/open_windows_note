@@ -5,6 +5,7 @@
 #include "ui/TitleBarLayout.h"
 #include "ui/ResizeMath.h"
 #include "ui/INoteContentView.h"
+#include "ui/FormatBarLayout.h"
 namespace own { class NoteStore; }
 class CNoteWindow : public CWnd {
 public:
@@ -27,6 +28,8 @@ private:
     own::TitleBarRects layout() const;   // 用当前 client 尺寸算标题栏
     void layoutContent();     // 把内容视图移到 noteContentRect
     void flushContent();      // 脏则落盘
+    bool hasFormatBar() const;   // 仅富文本便签显示工具条
+    int  contentTop() const;     // 标题栏高 + 工具条高（无工具条时仅标题栏）
     own::Note m_note;
     own::NoteStore* m_store = nullptr;
     bool m_dragging = false;

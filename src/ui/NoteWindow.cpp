@@ -24,6 +24,7 @@ static bool isImeComposing() {
 }
 
 static const own::TitleBarMetrics kTitleMetrics{ 22, 16, 4, 4 };   // 高 22 / 钮 16：紧凑标题栏
+static const own::FormatBarMetrics kFmtMetrics{ 22, 18, 6, 4 };   // 高 22 / 钮 18 的格式工具条
 
 // 标题栏文本是 UTF-8（noteTitleText）：转宽字符再画
 static std::wstring u8ToWideStr(const std::string& s) {
@@ -64,7 +65,7 @@ bool CNoteWindow::Create(const own::Note& note, own::NoteStore* store) {
     m_content = own::makeContentView(m_note.type);
     if (m_content) {
         CRect rc; GetClientRect(&rc);
-        own::RectI cr = own::noteContentRect({0,0,rc.Width(),rc.Height()}, kTitleMetrics.height, 6);
+        own::RectI cr = own::noteContentRect({0,0,rc.Width(),rc.Height()}, contentTop(), 6);
         m_content->Create(this, CRect(cr.x, cr.y, cr.x+cr.w, cr.y+cr.h));
         m_content->Load(m_note);
         m_content->ApplyTheme(m_theme.bgColor, m_theme.textColor);
@@ -82,6 +83,10 @@ void CNoteWindow::loadTheme() {
 own::TitleBarRects CNoteWindow::layout() const {
     CRect rc; GetClientRect(&rc);
     return own::layoutTitleBar({0,0,rc.Width(), rc.Height()}, kTitleMetrics);
+}
+bool CNoteWindow::hasFormatBar() const { return m_note.type == own::NoteType::RichText; }
+int  CNoteWindow::contentTop() const {
+    return kTitleMetrics.height + (hasFormatBar() ? kFmtMetrics.height : 0);
 }
 BOOL CNoteWindow::OnEraseBkgnd(CDC*) { return TRUE; }   // 防闪烁，全在 OnPaint 画
 
@@ -117,6 +122,38 @@ void CNoteWindow::OnPaint() {
         g.FillRectangle(&c1, L.themeBtn.x+4,        L.themeBtn.y+4, tw, L.themeBtn.h-8);
         g.FillRectangle(&c2, L.themeBtn.x+4+tw,     L.themeBtn.y+4, tw, L.themeBtn.h-8);
         g.FillRectangle(&c3, L.themeBtn.x+4+tw*2,   L.themeBtn.y+4, tw, L.themeBtn.h-8);
+        // 格式工具条（仅富文本、未卷起）：B I U S A- A+ ●
+        if (hasFormatBar() && !m_note.rolledUp) {
+            own::RectI bar = own::formatBarRect({0,0,rc.Width(),rc.Height()}, kTitleMetrics.height, kFmtMetrics);
+            // 条底色 = 标题色与背景色的中间过渡：直接用背景色 + 底部 1px 分隔线
+            Pen sep(Color(60, 0x40, 0x40, 0x40), 1.0f);
+            g.DrawLine(&sep, bar.x, bar.y + bar.h - 1, bar.x + bar.w, bar.y + bar.h - 1);
+            FontFamily ff(L"微软雅黑");   // 微软雅黑
+            Font fN(&ff, 12, FontStyleRegular, UnitPixel);
+            Font fB(&ff, 12, FontStyleBold, UnitPixel);
+            Font fI(&ff, 12, FontStyleItalic, UnitPixel);
+            Font fU(&ff, 12, FontStyleUnderline, UnitPixel);
+            Font fS(&ff, 12, FontStyleStrikeout, UnitPixel);
+            Font fSmall(&ff, 10, FontStyleRegular, UnitPixel);
+            SolidBrush ink(Color(255, 0x40, 0x40, 0x40));
+            StringFormat cf2; cf2.SetAlignment(StringAlignmentCenter); cf2.SetLineAlignment(StringAlignmentCenter);
+            auto drawGlyph = [&](int idx, const wchar_t* s, const Font& f) {
+                own::RectI b = own::formatBarButton(bar, kFmtMetrics, idx);
+                RectF r2((REAL)b.x, (REAL)b.y, (REAL)b.w, (REAL)b.h);
+                g.DrawString(s, -1, &f, r2, &cf2, &ink);
+            };
+            drawGlyph(0, L"B", fB);
+            drawGlyph(1, L"I", fI);
+            drawGlyph(2, L"U", fU);
+            drawGlyph(3, L"S", fS);
+            drawGlyph(4, L"A-", fSmall);
+            drawGlyph(5, L"A+", fSmall);
+            {   // 文字色按钮：实心圆点
+                own::RectI b = own::formatBarButton(bar, kFmtMetrics, 6);
+                SolidBrush dot2(Color(255, 0xC0, 0x39, 0x2B));
+                g.FillEllipse(&dot2, b.x + 4, b.y + 4, b.w - 8, b.h - 8);
+            }
+        }
         // 标题栏左侧显示便签标题（空内容回落 #id），不浪费拖动区
         {
             std::string t = own::noteTitleText(m_note);
@@ -172,6 +209,17 @@ void CNoteWindow::OnLButtonDown(UINT, CPoint pt) {
         m_resizing = true; m_resizeEdge = edge;
         ::GetCursorPos(&m_resizeAnchorScreen); GetWindowRect(&m_resizeStartRect);
         SetCapture(); return;
+    }
+    if (hasFormatBar() && !m_note.rolledUp) {
+        CRect rc2; GetClientRect(&rc2);
+        own::RectI bar = own::formatBarRect({0,0,rc2.Width(),rc2.Height()}, kTitleMetrics.height, kFmtMetrics);
+        int idx = own::hitTestFormatBar(bar, kFmtMetrics, own::kFmtOpCount, pt.x, pt.y);
+        if (idx >= 0) {
+            if (m_content) m_content->ApplyFormat((own::FmtOp)idx);
+            return;
+        }
+        // 命中工具条空白区不做事也不落到标题栏逻辑
+        if (pt.y >= bar.y && pt.y < bar.y + bar.h) return;
     }
     auto L = layout();
     switch (own::hitTestTitleBar(L, pt.x, pt.y)) {
@@ -266,7 +314,7 @@ void CNoteWindow::OnLButtonUp(UINT, CPoint) {
 void CNoteWindow::layoutContent() {
     if (!m_content) return;
     CRect rc; GetClientRect(&rc);
-    own::RectI cr = own::noteContentRect({0,0,rc.Width(),rc.Height()}, kTitleMetrics.height, 6);
+    own::RectI cr = own::noteContentRect({0,0,rc.Width(),rc.Height()}, contentTop(), 6);
     m_content->Reposition(CRect(cr.x, cr.y, cr.x+cr.w, cr.y+cr.h));
 }
 void CNoteWindow::flushContent() {
