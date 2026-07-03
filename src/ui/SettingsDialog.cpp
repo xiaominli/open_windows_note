@@ -5,6 +5,8 @@
 #include "domain/ThemeRules.h"
 #include "services/AutostartManager.h"
 #include "services/HotkeyManager.h"
+#include "domain/Hotkey.h"
+#include "ui/TextPrompt.h"
 #include <string>
 #include <vector>
 
@@ -27,7 +29,20 @@ public:
     HotkeyManager* hotkeys = nullptr;
     HWND hotkeyHwnd = nullptr;
     bool done = false;
-    int rowCount() const { return 3; }               // Task 6 扩展为 3 + 热键行数
+    static CString hkDisplayName(const std::string& name) {
+        if (name == "new")           return _T("\x70ED\x952E\xB7\x65B0\x5EFA\x4FBF\x7B7E");   // 热键·新建便签
+        if (name == "new_checklist") return _T("\x70ED\x952E\xB7\x65B0\x5EFA\x6E05\x5355");   // 热键·新建清单
+        if (name == "new_drawing")   return _T("\x70ED\x952E\xB7\x65B0\x5EFA\x6D82\x9E26");   // 热键·新建涂鸦
+        if (name == "manager")       return _T("\x70ED\x952E\xB7\x7BA1\x7406\x5668");         // 热键·管理器
+        if (name == "toggle_all")    return _T("\x70ED\x952E\xB7\x663E\x9690\x5168\x90E8");   // 热键·显隐全部
+        if (name == "quit")          return _T("\x70ED\x952E\xB7\x9000\x51FA");               // 热键·退出
+        return CString(name.c_str());
+    }
+    std::string bindingText(const HkBinding& b) {     // settings 覆盖优先
+        own::SettingsStore st(*db);
+        return st.getString("hotkey." + b.name, b.defBinding);
+    }
+    int rowCount() const { return 3 + (int)hotkeys->bindings().size(); }   // 3 通用行 + 热键行数
     CRect rowRect(int i) const { return CRect(kPad, kPad + i * kRowH, kWidth - kPad, kPad + (i + 1) * kRowH - 4); }
 
     BOOL PreTranslateMessage(MSG* m) override {
@@ -51,8 +66,12 @@ public:
             CString s; s.Format(_T("\x9ED8\x8BA4\x900F\x660E\x5EA6\xFF1A%d%%"), pct); // 默认透明度：
             return s;
         }
-        bool on = own_svc::autostartIsEnabled();      // 开机自启：开/关
-        return CString(_T("\x5F00\x673A\x81EA\x542F\xFF1A")) + (on ? _T("\x5F00") : _T("\x5173"));
+        if (i == 2) {                                  // 开机自启：开/关
+            bool on = own_svc::autostartIsEnabled();
+            return CString(_T("\x5F00\x673A\x81EA\x542F\xFF1A")) + (on ? _T("\x5F00") : _T("\x5173"));
+        }
+        const auto& b = hotkeys->bindings()[i - 3];
+        return hkDisplayName(b.name) + _T("\xFF1A") + CString(bindingText(b).c_str()); // ：
     }
     void clickRow(int i) {
         own::SettingsStore st(*db);
@@ -68,6 +87,33 @@ public:
             st.setInt("default_opacity", steps[(idx + 1) % 4]);
         } else if (i == 2) {
             own_svc::autostartSetEnabled(!own_svc::autostartIsEnabled());
+        } else if (i >= 3) {
+            const auto& bs = hotkeys->bindings();
+            const auto& b = bs[i - 3];
+            CString io(bindingText(b).c_str());
+            if (!own_ui::promptText(this, _T("\x8F93\x5165\x70ED\x952E (\x5982 Ctrl+Alt+N)"), io)) return; // 输入热键 (如 …)
+            CStringA a(io);                                    // 热键串全 ASCII
+            std::string s((LPCSTR)a);
+            own::Hotkey parsed;
+            if (!own::parseHotkey(s, parsed)) {
+                AfxMessageBox(_T("\x70ED\x952E\x683C\x5F0F\x65E0\x6548"));            // 热键格式无效
+                return;
+            }
+            std::vector<own::Hotkey> all;                       // 冲突检测：候选 + 其余现值
+            all.push_back(parsed);
+            for (size_t k = 0; k < bs.size(); ++k) {
+                if ((int)k == i - 3) continue;
+                own::Hotkey other;
+                if (own::parseHotkey(st.getString("hotkey." + bs[k].name, bs[k].defBinding), other))
+                    all.push_back(other);
+            }
+            if (!own::findHotkeyConflicts(all).empty()) {
+                AfxMessageBox(_T("\x4E0E\x5176\x5B83\x70ED\x952E\x51B2\x7A81"));      // 与其它热键冲突
+                return;
+            }
+            st.setString("hotkey." + b.name, own::formatHotkey(parsed));   // 规范化写回
+            hotkeys->unregisterAll(hotkeyHwnd);
+            hotkeys->loadAndRegister(hotkeyHwnd, st);
         }
         Invalidate(FALSE);
     }
