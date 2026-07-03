@@ -24,6 +24,8 @@ public:
 private:
     void createAndShowNote(const own::Note& seed);
     CNoteWindow* findNote(int64_t id);   // 在 m_notes 里查；无则 nullptr
+    void doExportBackup();
+    void doImportBackup();
 
     own::Database  m_db;
     std::unique_ptr<own::NoteStore> m_store;

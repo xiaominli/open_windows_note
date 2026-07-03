@@ -11,6 +11,7 @@ class CNoteWindow : public CWnd {
 public:
     bool Create(const own::Note& note, own::NoteStore* store);
     int64_t noteId() const { return m_note.id; }
+    void flushNow() { flushContent(); }   // 导出备份前确保最新内容落盘
 protected:
     afx_msg void OnPaint();
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);

@@ -3,13 +3,31 @@
 #include "app/DbBootstrap.h"
 #include "data/NoteStore.h"
 #include "data/SettingsStore.h"
+#include "data/BackupService.h"
+#include "domain/BackupRules.h"
 #include "services/AutostartManager.h"
 #include "ui/ReminderToast.h"
 #include "ui/SettingsDialog.h"
 #include "ui/TextContentView.h"
+#include <afxdlgs.h>   // CFileDialog
 #include <gdiplus.h>
 #include <string>
 #include <ctime>
+
+static std::wstring u8ToW(const std::string& s) {
+    if (s.empty()) return std::wstring();
+    int n = ::MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), nullptr, 0);
+    std::wstring w(n > 0 ? n : 0, L'\0');
+    if (n > 0) ::MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), &w[0], n);
+    return w;
+}
+static std::string wToU8(const std::wstring& w) {
+    if (w.empty()) return std::string();
+    int n = ::WideCharToMultiByte(CP_UTF8, 0, w.c_str(), (int)w.size(), nullptr, 0, nullptr, nullptr);
+    std::string s(n > 0 ? n : 0, '\0');
+    if (n > 0) ::WideCharToMultiByte(CP_UTF8, 0, w.c_str(), (int)w.size(), &s[0], n, nullptr, nullptr);
+    return s;
+}
 
 CNoteApp theApp;   // the one and only application object; MFC supplies WinMain
 
@@ -95,6 +113,8 @@ BOOL CNoteApp::InitInstance() {
     m_host.onOpenSettings = [this]{
         own_ui::showSettingsDialog(m_db, *m_store, m_hotkeys, m_host.GetSafeHwnd());
     };
+    m_host.onExportBackup = [this]{ doExportBackup(); };
+    m_host.onImportBackup = [this]{ doImportBackup(); };
 
     if (!m_host.Create())
         return FALSE;
@@ -178,6 +198,58 @@ void CNoteApp::setAllNotesVisible(bool show) {
         if (show) openOrFocusNote(n.id);
         else closeNoteWindow(n.id);
     }
+}
+
+void CNoteApp::doExportBackup() {
+    for (auto& w : m_notes) if (w) w->flushNow();          // 备份含最新内容
+    time_t now = time(nullptr);
+    tm lt{}; localtime_s(&lt, &now);
+    std::string name = own::defaultBackupName(lt.tm_year + 1900, lt.tm_mon + 1,
+                                              lt.tm_mday, lt.tm_hour, lt.tm_min);
+    CFileDialog dlg(FALSE, _T("db"), CString(name.c_str()),
+                    OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST,
+                    _T("SQLite \x6570\x636E\x5E93 (*.db)|*.db|\x5168\x90E8\x6587\x4EF6 (*.*)|*.*||"));  // 数据库/全部文件
+    if (dlg.DoModal() != IDOK) return;
+    std::string dest = wToU8((LPCWSTR)dlg.GetPathName());
+    std::string err;
+    if (own::exportBackup(m_db, dest, &err)) {
+        AfxMessageBox(_T("\x5BFC\x51FA\x6210\x529F") + CString(_T("\x3002")));         // 导出成功。
+    } else {
+        AfxMessageBox(_T("\x5BFC\x51FA\x5931\x8D25\xFF1A") + CString(err.c_str()));    // 导出失败：
+    }
+}
+void CNoteApp::doImportBackup() {
+    CFileDialog dlg(TRUE, _T("db"), nullptr, OFN_FILEMUSTEXIST,
+                    _T("SQLite \x6570\x636E\x5E93 (*.db)|*.db|\x5168\x90E8\x6587\x4EF6 (*.*)|*.*||"));  // 数据库/全部文件
+    if (dlg.DoModal() != IDOK) return;
+    std::string src = wToU8((LPCWSTR)dlg.GetPathName());
+    std::string err;
+    if (!own::validateBackupFile(src, &err)) {
+        AfxMessageBox(_T("\x65E0\x6548\x7684\x5907\x4EFD\x6587\x4EF6\xFF1A") + CString(err.c_str()));  // 无效的备份文件：
+        return;
+    }
+    if (AfxMessageBox(_T("\x5BFC\x5165\x5C06\x66FF\x6362\x5F53\x524D\x5168\x90E8\x6570\x636E\x5E76\x91CD\x542F\x5E94\x7528\xFF0C\x662F\x5426\x7EE7\x7EED\xFF1F"),  // 导入将替换当前全部数据并重启应用，是否继续？
+                      MB_YESNO | MB_ICONWARNING) != IDYES)
+        return;
+    // 停掉会碰 store 的定时轮询，再拆窗、关库（顺序：先消费方后 DB）
+    m_host.onReminderTick = []{};
+    m_notes.clear();                                       // 析构链走 flushContent 落盘
+    if (m_main) { m_main->DestroyWindow(); m_main.reset(); }
+    m_store.reset();
+    m_db.close();
+    std::string cur = own::resolveDbPathWin();
+    std::wstring wCur = u8ToW(cur), wSrc = u8ToW(src), wBak = u8ToW(cur + ".bak");
+    ::CopyFileW(wCur.c_str(), wBak.c_str(), FALSE);        // 现库兜底备份（失败不阻断——可能首启无库）
+    if (!::CopyFileW(wSrc.c_str(), wCur.c_str(), FALSE)) {
+        AfxMessageBox(_T("\x66FF\x6362\x6570\x636E\x5E93\x6587\x4EF6\x5931\x8D25\xFF0C\x5DF2\x4FDD\x7559\x539F\x5E93\x3002\x5E94\x7528\x5373\x5C06\x9000\x51FA\x3002"));  // 替换数据库文件失败，已保留原库。应用即将退出。
+        ::PostQuitMessage(0);                              // 库已关，无法继续运行——退出（原文件未动）
+        return;
+    }
+    if (m_singleton) { ::CloseHandle(m_singleton); m_singleton = nullptr; }   // 先释放单例锁再拉新进程
+    wchar_t exe[MAX_PATH]{};
+    ::GetModuleFileNameW(nullptr, exe, MAX_PATH);
+    ::ShellExecuteW(nullptr, L"open", exe, nullptr, nullptr, SW_SHOWNORMAL);
+    ::PostQuitMessage(0);
 }
 
 int CNoteApp::ExitInstance() {
