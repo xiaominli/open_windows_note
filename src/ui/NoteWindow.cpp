@@ -3,6 +3,7 @@
 #include "ui/ContentLayout.h"
 #include "ui/ContentViewFactory.h"
 #include "domain/Geometry.h"
+#include "domain/NoteListFormat.h"
 #include "data/NoteStore.h"
 #include <gdiplus.h>
 #include <ctime>
@@ -21,7 +22,16 @@ static bool isImeComposing() {
     return composing;
 }
 
-static const own::TitleBarMetrics kTitleMetrics{ 28, 16, 4, 4 };   // btnSize 20→16：按钮再小一点
+static const own::TitleBarMetrics kTitleMetrics{ 22, 16, 4, 4 };   // 高 22 / 钮 16：紧凑标题栏
+
+// 标题栏文本是 UTF-8（noteTitleText）：转宽字符再画
+static std::wstring u8ToWideStr(const std::string& s) {
+    if (s.empty()) return std::wstring();
+    int n = ::MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), nullptr, 0);
+    std::wstring w(n > 0 ? n : 0, L'\0');
+    if (n > 0) ::MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), &w[0], n);
+    return w;
+}
 
 BEGIN_MESSAGE_MAP(CNoteWindow, CWnd)
     ON_WM_PAINT()
@@ -92,6 +102,21 @@ void CNoteWindow::OnPaint() {
         SolidBrush dot(Color(255,0x40,0x40,0x40));
         g.FillRectangle(&dot, L.pinBtn.x+6, L.pinBtn.y+4, 6, L.pinBtn.h-8);
         g.DrawEllipse(&pen, L.opacityBtn.x+3, L.opacityBtn.y+3, L.opacityBtn.w-6, L.opacityBtn.h-6);
+        // 标题栏左侧显示便签标题（空内容回落 #id），不浪费拖动区
+        {
+            std::string t = own::noteTitleText(m_note);
+            if (m_note.plainText.empty() && m_note.title.empty())
+                t = "#" + std::to_string(m_note.id);
+            std::wstring wt = u8ToWideStr(t);
+            FontFamily tf(L"微软雅黑"); Font tfont(&tf, 12, FontStyleRegular, UnitPixel);
+            SolidBrush tb(Color(255, 0x40, 0x40, 0x40));
+            StringFormat sf; sf.SetTrimming(StringTrimmingEllipsisCharacter);
+            sf.SetFormatFlags(StringFormatFlagsNoWrap);
+            sf.SetLineAlignment(StringAlignmentCenter);
+            RectF tr((REAL)(L.dragArea.x + 8), (REAL)L.dragArea.y,
+                     (REAL)(L.dragArea.w - 10), (REAL)L.dragArea.h);
+            g.DrawString(wt.c_str(), (int)wt.size(), &tfont, tr, &sf, &tb);
+        }
         // 占位内容（卷起时不画；有内容视图时由子控件自绘）
         if (!m_note.rolledUp && !m_content) {
             FontFamily ff(L"Segoe UI"); Font font(&ff, 12, FontStyleRegular, UnitPixel);
@@ -221,8 +246,11 @@ void CNoteWindow::flushContent() {
     if (!m_content || !m_store) return;
     if (!m_content->IsDirty()) return;
     std::vector<uint8_t> blob; std::string plain;
-    if (m_content->Save(blob, plain))
+    if (m_content->Save(blob, plain)) {
         m_store->updateContent(m_note.id, blob, plain, (int64_t)time(nullptr));
+        m_note.plainText = plain;   // 标题栏标题跟随内容
+        Invalidate(FALSE);
+    }
 }
 void CNoteWindow::OnSize(UINT nType, int cx, int cy) {
     CWnd::OnSize(nType, cx, cy);

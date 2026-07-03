@@ -66,7 +66,7 @@ void CChecklistContentView::OnPaint() {
     mem.FillSolidRect(&rc, RGB(0xFF, 0xF7, 0xB0));           // 背景（与便签底色一致，主题化留 P4）
     CPen pen(PS_SOLID, 1, RGB(0x50, 0x50, 0x50));
     CPen* op = mem.SelectObject(&pen);
-    CFont* of = mem.SelectObject(CFont::FromHandle(own_ui::uiFont(16)));   // DC 默认 SYSTEM_FONT 中文发虚
+    CFont* of = mem.SelectObject(CFont::FromHandle(own_ui::uiFont(14)));   // DC 默认 SYSTEM_FONT 中文发虚
     mem.SetBkMode(TRANSPARENT);
     own::RectI content{ 0, 0, rc.Width(), rc.Height() };
     for (size_t i = 0; i < m_items.size(); ++i) {
@@ -97,7 +97,7 @@ void CChecklistContentView::beginEdit(int index) {
     CRect er(b.x + b.w + 4, r.y, r.x + r.w, r.y + r.h);
     if (m_edit.GetSafeHwnd()) m_edit.DestroyWindow();
     m_edit.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, er, this, kInplaceEditId);
-    m_edit.SetFont(CFont::FromHandle(own_ui::uiFont(16)));
+    m_edit.SetFont(CFont::FromHandle(own_ui::uiFont(14)));
     m_edit.SetWindowText(u8ToWide(m_items[index].text));
     m_edit.SetFocus();
     m_edit.SetSel(0, -1);

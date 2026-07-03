@@ -27,7 +27,7 @@ static void applyNoteFont(CRichEditCtrl& edit, WPARAM scope) {
     cf.cbSize = sizeof(cf);
     cf.dwMask = CFM_FACE | CFM_SIZE | CFM_CHARSET;
     wcscpy_s(cf.szFaceName, L"微软雅黑");   // 微软雅黑
-    cf.yHeight = 240;                        // 12pt（twip）
+    cf.yHeight = 200;                        // 10pt（twip）
     cf.bCharSet = DEFAULT_CHARSET;
     ::SendMessage(edit.GetSafeHwnd(), EM_SETCHARFORMAT, scope, (LPARAM)&cf);
 }
