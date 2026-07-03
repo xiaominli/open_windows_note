@@ -6,6 +6,7 @@
 #include "services/AutostartManager.h"
 #include "ui/ReminderToast.h"
 #include "ui/SettingsDialog.h"
+#include "ui/TextContentView.h"
 #include <gdiplus.h>
 #include <string>
 #include <ctime>
@@ -32,6 +33,11 @@ BOOL CNoteApp::InitInstance() {
                         + path + "\n" + err).c_str();
         AfxMessageBox(CString(msg));
         return FALSE;
+    }
+
+    {
+        own::SettingsStore st(m_db);
+        CTextContentView::SetDefaultFontPt(st.getInt("default_font_pt", 10));   // 默认字号先于建窗生效
     }
 
     Gdiplus::GdiplusStartupInput gsi;

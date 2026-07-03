@@ -7,6 +7,7 @@
 #include "services/HotkeyManager.h"
 #include "domain/Hotkey.h"
 #include "ui/TextPrompt.h"
+#include "ui/TextContentView.h"
 #include <string>
 #include <vector>
 
@@ -42,7 +43,7 @@ public:
         own::SettingsStore st(*db);
         return st.getString("hotkey." + b.name, b.defBinding);
     }
-    int rowCount() const { return 3 + (int)hotkeys->bindings().size(); }   // 3 通用行 + 热键行数
+    int rowCount() const { return 4 + (int)hotkeys->bindings().size(); }   // 4 通用行 + 热键行数
     CRect rowRect(int i) const { return CRect(kPad, kPad + i * kRowH, kWidth - kPad, kPad + (i + 1) * kRowH - 4); }
 
     BOOL PreTranslateMessage(MSG* m) override {
@@ -66,11 +67,16 @@ public:
             CString s; s.Format(_T("\x9ED8\x8BA4\x900F\x660E\x5EA6\xFF1A%d%%"), pct); // 默认透明度：
             return s;
         }
-        if (i == 2) {                                  // 开机自启：开/关
+        if (i == 2) {                                  // 默认字号：N pt
+            int pt = st.getInt("default_font_pt", 10);
+            CString s; s.Format(_T("\x9ED8\x8BA4\x5B57\x53F7\xFF1A%d pt"), pt);   // 默认字号：
+            return s;
+        }
+        if (i == 3) {                                  // 开机自启：开/关
             bool on = own_svc::autostartIsEnabled();
             return CString(_T("\x5F00\x673A\x81EA\x542F\xFF1A")) + (on ? _T("\x5F00") : _T("\x5173"));
         }
-        const auto& b = hotkeys->bindings()[i - 3];
+        const auto& b = hotkeys->bindings()[i - 4];
         return hkDisplayName(b.name) + _T("\xFF1A") + CString(bindingText(b).c_str()); // ：
     }
     void clickRow(int i) {
@@ -86,10 +92,17 @@ public:
             int idx = 0; for (int k = 0; k < 4; ++k) if (steps[k] == cur) { idx = k; break; }
             st.setInt("default_opacity", steps[(idx + 1) % 4]);
         } else if (i == 2) {
+            static const int pts[] = { 9, 10, 11, 12, 14 };
+            int cur = st.getInt("default_font_pt", 10);
+            int idx = 0; for (int k = 0; k < 5; ++k) if (pts[k] == cur) { idx = k; break; }
+            int next = pts[(idx + 1) % 5];
+            st.setInt("default_font_pt", next);
+            CTextContentView::SetDefaultFontPt(next);          // 即时生效于此后新输入/新便签
+        } else if (i == 3) {
             own_svc::autostartSetEnabled(!own_svc::autostartIsEnabled());
-        } else if (i >= 3) {
+        } else if (i >= 4) {
             const auto& bs = hotkeys->bindings();
-            const auto& b = bs[i - 3];
+            const auto& b = bs[i - 4];
             CString io(bindingText(b).c_str());
             if (!own_ui::promptText(this, _T("\x8F93\x5165\x70ED\x952E (\x5982 Ctrl+Alt+N)"), io)) return; // 输入热键 (如 …)
             CStringA a(io);                                    // 热键串全 ASCII
@@ -102,7 +115,7 @@ public:
             std::vector<own::Hotkey> all;                       // 冲突检测：候选 + 其余现值
             all.push_back(parsed);
             for (size_t k = 0; k < bs.size(); ++k) {
-                if ((int)k == i - 3) continue;
+                if ((int)k == i - 4) continue;
                 own::Hotkey other;
                 if (own::parseHotkey(st.getString("hotkey." + bs[k].name, bs[k].defBinding), other))
                     all.push_back(other);
