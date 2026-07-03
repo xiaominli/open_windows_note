@@ -1,4 +1,5 @@
 #include "ui/TextPrompt.h"
+#include "ui/UiFont.h"
 namespace own_ui {
 class CPromptWnd : public CWnd {
 public:
@@ -28,6 +29,7 @@ bool promptText(CWnd* parent, const CString& title, CString& io) {
                WS_POPUP | WS_CAPTION | WS_VISIBLE, r, parent, 0);
     w.m_edit.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
                     CRect(12, 12, 288, 40), &w, 0x3301);
+    w.m_edit.SetFont(CFont::FromHandle(uiFont(16)));
     w.m_edit.SetWindowText(io);
     w.m_edit.SetFocus();
     w.m_edit.SetSel(0, -1);

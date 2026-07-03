@@ -20,6 +20,17 @@ DWORD CALLBACK streamOutCb(DWORD_PTR cookie, LPBYTE src, LONG cb, LONG* pcb) {
     *pcb = cb;
     return 0;
 }
+// RichEdit 不设置字体时用系统默认（System 点阵字体），中文渲染发虚。
+// scope = SCF_DEFAULT（新输入）或 SCF_ALL（整篇统一；当前无格式工具条，安全）。
+static void applyNoteFont(CRichEditCtrl& edit, WPARAM scope) {
+    CHARFORMAT2W cf{};
+    cf.cbSize = sizeof(cf);
+    cf.dwMask = CFM_FACE | CFM_SIZE | CFM_CHARSET;
+    wcscpy_s(cf.szFaceName, L"微软雅黑");   // 微软雅黑
+    cf.yHeight = 240;                        // 12pt（twip）
+    cf.bCharSet = DEFAULT_CHARSET;
+    ::SendMessage(edit.GetSafeHwnd(), EM_SETCHARFORMAT, scope, (LPARAM)&cf);
+}
 } // namespace
 
 bool CTextContentView::Create(CWnd* parent, const CRect& rc) {
@@ -36,6 +47,7 @@ bool CTextContentView::Create(CWnd* parent, const CRect& rc) {
         return false;
     }
     m_edit.SetEventMask(m_edit.GetEventMask() | ENM_CHANGE);
+    applyNoteFont(m_edit, SCF_DEFAULT);
     m_created = true;
     return true;
 }
@@ -53,6 +65,7 @@ void CTextContentView::Load(const own::Note& note) {
             m_edit.SetWindowText(CString(s.c_str()));
         }
     }
+    applyNoteFont(m_edit, SCF_ALL);   // 旧内容 RTF 里带的 System 字体也统一掉
     m_edit.SetModify(FALSE);
 }
 bool CTextContentView::Save(std::vector<uint8_t>& outBlob, std::string& outPlain) {

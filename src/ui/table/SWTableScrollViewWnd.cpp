@@ -848,6 +848,10 @@ void SWTableScrollViewWnd::OnDraw(CDC* pDC, CRect rect)
 		SelectClipRgn(m_hdc_mem, hRgn);
 		DeleteObject(hRgn);
 
+		// cell 文本选入 label 字体（雅黑）：否则 callback 里 DrawTextW 落在 DC 默认
+		// SYSTEM_FONT（点阵）上，中文发虚。表头走 quick_text 自带字体。RestoreDC 恢复。
+		SelectObject(m_hdc_mem, m_hLabelFont);
+
 		// 每帧数据准备（一次性加锁拷贝 / 排序由调用方实现）
 		if (m_pCallback)
 		{

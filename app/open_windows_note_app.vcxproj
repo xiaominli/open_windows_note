@@ -136,6 +136,7 @@
     <ClCompile Include="..\src\ui\NoteListView.cpp" />
     <ClCompile Include="..\src\ui\SearchBox.cpp" />
     <ClCompile Include="..\src\ui\TextPrompt.cpp" />
+    <ClCompile Include="..\src\ui\UiFont.cpp" />
     <ClCompile Include="..\src\ui\ReminderToast.cpp" />
     <ClCompile Include="..\src\third_party\sqlite\sqlite3.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -163,6 +164,7 @@
     <ClInclude Include="..\src\ui\NoteListView.h" />
     <ClInclude Include="..\src\ui\SearchBox.h" />
     <ClInclude Include="..\src\ui\TextPrompt.h" />
+    <ClInclude Include="..\src\ui\UiFont.h" />
     <ClInclude Include="..\src\ui\ReminderToast.h" />
     <ClInclude Include="..\src\domain\ReminderRules.h" />
     <ClInclude Include="..\src\domain\DateTimeText.h" />

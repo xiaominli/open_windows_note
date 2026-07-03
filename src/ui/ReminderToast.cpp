@@ -3,6 +3,7 @@
 #include "data/NoteStore.h"
 #include "domain/ReminderRules.h"
 #include "domain/NoteListFormat.h"
+#include "ui/UiFont.h"
 #include <mmsystem.h>
 #include <ctime>
 
@@ -71,7 +72,7 @@ void CReminderToast::OnPaint() {
     dc.FillSolidRect(c, RGB(45, 45, 48));
     dc.Draw3dRect(c, RGB(90, 90, 96), RGB(20, 20, 22));
     dc.SetBkMode(TRANSPARENT);
-    CFont* old = dc.SelectObject(CFont::FromHandle((HFONT)::GetStockObject(DEFAULT_GUI_FONT)));
+    CFont* old = dc.SelectObject(CFont::FromHandle(own_ui::uiFont(16)));
     dc.SetTextColor(RGB(0xF2, 0xD2, 0x4A));
     CRect hd(10, 8, c.right - 10, 26);
     dc.DrawText(_T("\x23F0 \x63D0\x9192"), hd, DT_SINGLELINE | DT_VCENTER);   // ⏰ 提醒
