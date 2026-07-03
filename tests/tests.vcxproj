@@ -137,6 +137,8 @@
     <ClCompile Include="..\src\data\Statement.cpp" />
     <ClCompile Include="..\src\data\Migrations.cpp" />
     <ClCompile Include="..\src\data\NoteStore.cpp" />
+    <ClCompile Include="test_backup_service.cpp" />
+    <ClCompile Include="..\src\data\BackupService.cpp" />
     <ClCompile Include="..\src\domain\SearchText.cpp" />
     <ClCompile Include="..\src\domain\ChecklistModel.cpp" />
     <ClCompile Include="..\src\domain\ChecklistJson.cpp" />
