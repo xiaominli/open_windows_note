@@ -121,6 +121,7 @@
     <ClCompile Include="..\src\services\TrayIcon.cpp" />
     <ClCompile Include="..\src\services\ReminderScheduler.cpp" />
     <ClCompile Include="..\src\ui\TitleBarLayout.cpp" />
+    <ClCompile Include="..\src\ui\FormatBarLayout.cpp" />
     <ClCompile Include="..\src\ui\ResizeMath.cpp" />
     <ClCompile Include="..\src\ui\ChecklistLayout.cpp" />
     <ClCompile Include="..\src\ui\DrawingMath.cpp" />
@@ -169,6 +170,7 @@
     <ClInclude Include="..\src\ui\UiFont.h" />
     <ClInclude Include="..\src\ui\ReminderToast.h" />
     <ClInclude Include="..\src\ui\SettingsDialog.h" />
+    <ClInclude Include="..\src\ui\FormatBarLayout.h" />
     <ClInclude Include="..\src\domain\ReminderRules.h" />
     <ClInclude Include="..\src\domain\ThemeRules.h" />
     <ClInclude Include="..\src\domain\DateTimeText.h" />
