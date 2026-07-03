@@ -117,6 +117,9 @@
     <ClCompile Include="..\src\domain\NoteListFormat.cpp" />
     <ClCompile Include="test_theme_rules.cpp" />
     <ClCompile Include="..\src\domain\ThemeRules.cpp" />
+    <ClCompile Include="test_sticky_backup_rules.cpp" />
+    <ClCompile Include="..\src\domain\StickyRules.cpp" />
+    <ClCompile Include="..\src\domain\BackupRules.cpp" />
     <ClCompile Include="test_datetime_text.cpp" />
     <ClCompile Include="..\src\domain\DateTimeText.cpp" />
     <ClCompile Include="test_hotkey.cpp" />

@@ -204,3 +204,17 @@ TEST_CASE("updateNoteGroup changes only group_id") {
     CHECK(back->plainText == "keep");
     REQUIRE(back->contentBlob.size() == 2);
 }
+
+TEST_CASE("updateNoteStick changes only stick_target") {
+    auto db = freshDb(); own::NoteStore s(db);
+    own::Note n; n.contentBlob = {5,6}; n.plainText = "keep";
+    int64_t id = s.insertNote(n, 1000);
+    CHECK(s.updateNoteStick(id, "class:Notepad"));
+    auto back = s.getNote(id);
+    REQUIRE(back.has_value());
+    CHECK(back->stickTarget == "class:Notepad");
+    CHECK(back->plainText == "keep");
+    REQUIRE(back->contentBlob.size() == 2);
+    CHECK(s.updateNoteStick(id, ""));                 // clear
+    CHECK(s.getNote(id)->stickTarget.empty());
+}

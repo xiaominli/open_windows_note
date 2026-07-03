@@ -114,6 +114,8 @@
     <ClCompile Include="..\src\domain\NoteListFormat.cpp" />
     <ClCompile Include="..\src\domain\Hotkey.cpp" />
     <ClCompile Include="..\src\domain\ThemeRules.cpp" />
+    <ClCompile Include="..\src\domain\StickyRules.cpp" />
+    <ClCompile Include="..\src\domain\BackupRules.cpp" />
     <ClCompile Include="..\src\domain\ReminderRules.cpp" />
     <ClCompile Include="..\src\domain\DateTimeText.cpp" />
     <ClCompile Include="..\src\services\HotkeyManager.cpp" />
@@ -173,6 +175,8 @@
     <ClInclude Include="..\src\ui\FormatBarLayout.h" />
     <ClInclude Include="..\src\domain\ReminderRules.h" />
     <ClInclude Include="..\src\domain\ThemeRules.h" />
+    <ClInclude Include="..\src\domain\StickyRules.h" />
+    <ClInclude Include="..\src\domain\BackupRules.h" />
     <ClInclude Include="..\src\domain\DateTimeText.h" />
     <ClInclude Include="..\src\services\ReminderScheduler.h" />
   </ItemGroup>

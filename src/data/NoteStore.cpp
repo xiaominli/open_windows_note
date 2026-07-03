@@ -256,5 +256,11 @@ bool NoteStore::updateNoteGroup(int64_t noteId, int64_t groupId) {
     s.execDone();
     return true;
 }
+bool NoteStore::updateNoteStick(int64_t noteId, const std::string& target) {
+    Statement s(db_, "UPDATE notes SET stick_target=? WHERE id=?;");
+    s.bind(1, target); s.bind(2, noteId);
+    s.execDone();
+    return true;
+}
 
 } // namespace own
