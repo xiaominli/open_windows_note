@@ -143,3 +143,21 @@ TEST_CASE("query filters by tag via note_tags join") {
     REQUIRE(r.size() == 1);
     CHECK(r[0].id == n1);
 }
+
+TEST_CASE("reminder update and delete roundtrip") {
+    auto db = freshDb(); own::NoteStore s(db);
+    int64_t nid = s.insertNote(own::Note{}, 1000);
+    own::Reminder r; r.noteId = nid; r.dueAt = 5000;
+    r.id = s.insertReminder(r);
+    r.dueAt = 7000; r.recurrence = own::Recurrence::Daily;
+    r.snoozeUntil = 6000; r.enabled = false;
+    CHECK(s.updateReminder(r));
+    auto back = s.remindersOfNote(nid);
+    REQUIRE(back.size() == 1);
+    CHECK(back[0].dueAt == 7000);
+    CHECK(back[0].recurrence == own::Recurrence::Daily);
+    CHECK(back[0].snoozeUntil == 6000);
+    CHECK_FALSE(back[0].enabled);
+    CHECK(s.deleteReminder(r.id));
+    CHECK(s.remindersOfNote(nid).empty());
+}

@@ -42,4 +42,28 @@ int64_t computeNextDue(const Reminder& r, int64_t firedAt) {
 
 int64_t snooze(int64_t now, int minutes) { return now + (int64_t)minutes * 60; }
 
+std::vector<Reminder> pickDueReminders(const std::vector<Reminder>& rs, int64_t now,
+                                       const std::vector<int64_t>& skipIds) {
+    std::vector<Reminder> out;
+    for (const auto& r : rs) {
+        bool skip = false;
+        for (int64_t id : skipIds) if (id == r.id) { skip = true; break; }
+        if (!skip && isDue(r, now)) out.push_back(r);
+    }
+    return out;
+}
+
+Reminder resolveReminderDismiss(Reminder r, int64_t now) {
+    r.snoozeUntil = 0;
+    if (r.recurrence == Recurrence::None) { r.enabled = false; return r; }
+    int64_t next = computeNextDue(r, now);
+    if (next > 0) r.dueAt = next; else r.enabled = false;
+    return r;
+}
+
+Reminder resolveReminderSnooze(Reminder r, int64_t now, int minutes) {
+    r.snoozeUntil = snooze(now, minutes);
+    return r;
+}
+
 } // namespace own
