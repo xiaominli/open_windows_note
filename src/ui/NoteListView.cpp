@@ -176,17 +176,17 @@ void CNoteListView::onContextMenu(int row) {
         reload();
     }
     else if (cmd == 3) { if (m_host) m_host->closeNoteWindow(id); m_store->deleteNote(id); reload(); }
-    else if (cmd == 100) { note->groupId = 0; m_store->updateNote(*note, note->updatedAt); reload(); }
+    else if (cmd == 100) { m_store->updateNoteGroup(note->id, 0); reload(); }
     else if (cmd >= 200 && cmd < 299) {
         size_t i = (size_t)(cmd - 200);
-        if (i < groups.size()) { note->groupId = groups[i].id; m_store->updateNote(*note, note->updatedAt); reload(); }
+        if (i < groups.size()) { m_store->updateNoteGroup(note->id, groups[i].id); reload(); }
     }
     else if (cmd == 199) {
         CString name;
         if (own_ui::promptText(m_table, _T("\x65B0\x5EFA\x5206\x7EC4"), name)) {
             own::Group g; g.name = wideToU8(name);
             int64_t gid = m_store->upsertGroup(g);
-            note->groupId = gid; m_store->updateNote(*note, note->updatedAt); reload();
+            m_store->updateNoteGroup(note->id, gid); reload();
         }
     }
     else if (cmd >= 300 && cmd < 399) {

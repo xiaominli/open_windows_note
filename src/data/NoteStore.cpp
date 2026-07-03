@@ -250,5 +250,11 @@ bool NoteStore::updateNoteTheme(int64_t noteId, int64_t themeId) {
     s.execDone();
     return true;
 }
+bool NoteStore::updateNoteGroup(int64_t noteId, int64_t groupId) {
+    Statement s(db_, "UPDATE notes SET group_id=? WHERE id=?;");
+    s.bind(1, groupId); s.bind(2, noteId);
+    s.execDone();
+    return true;
+}
 
 } // namespace own

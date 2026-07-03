@@ -42,6 +42,7 @@ public:
     std::vector<Theme> allThemes();
     std::optional<Theme> getTheme(int64_t id);
     bool updateNoteTheme(int64_t noteId, int64_t themeId);   // 只改 theme_id（updateNote 会整行覆盖 blob）
+    bool updateNoteGroup(int64_t noteId, int64_t groupId);   // 只改 group_id（updateNote 会整行覆盖 blob）
 private:
     Note readRow(class Statement& s);  // 从 SELECT * 顺序读一行
     Database& db_;

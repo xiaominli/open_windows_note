@@ -190,3 +190,17 @@ TEST_CASE("updateNoteTheme changes only theme_id") {
     REQUIRE(back->contentBlob.size() == 3);
     CHECK(back->contentBlob[2] == 3);
 }
+
+TEST_CASE("updateNoteGroup changes only group_id") {
+    auto db = freshDb(); own::NoteStore s(db);
+    own::Note n; n.contentBlob = {7,8}; n.plainText = "keep";
+    int64_t id = s.insertNote(n, 1000);
+    own::Group g; g.name = "g";
+    int64_t gid = s.upsertGroup(g);
+    CHECK(s.updateNoteGroup(id, gid));
+    auto back = s.getNote(id);
+    REQUIRE(back.has_value());
+    CHECK(back->groupId == gid);
+    CHECK(back->plainText == "keep");
+    REQUIRE(back->contentBlob.size() == 2);
+}
