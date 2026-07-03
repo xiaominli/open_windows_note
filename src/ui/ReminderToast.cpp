@@ -94,18 +94,23 @@ void CReminderToast::OnPaint() {
 }
 
 void CReminderToast::OnLButtonUp(UINT, CPoint pt) {
+    int hit = -1;
+    for (int i = 0; i < 3; ++i) if (btnRect(i).PtInRect(pt)) { hit = i; break; }
+    if (hit < 0) return;
     int64_t now = (int64_t)time(nullptr);
-    if (btnRect(0).PtInRect(pt)) {                 // 打开：开便签 + 按"关闭"落库
-        if (m_host) m_host->openOrFocusNote(m_note.id);
-        if (m_store) m_store->updateReminder(own::resolveReminderDismiss(m_rem, now));
-        closeToast();
-    } else if (btnRect(1).PtInRect(pt)) {          // 贪睡 10 分钟
-        if (m_store) m_store->updateReminder(own::resolveReminderSnooze(m_rem, now, 10));
-        closeToast();
-    } else if (btnRect(2).PtInRect(pt)) {          // 关闭：一次性禁用 / 重复推进
-        if (m_store) m_store->updateReminder(own::resolveReminderDismiss(m_rem, now));
-        closeToast();
+    // 以库中当前行为准：toast 无超时可停留很久，期间提醒可能被菜单改过/取消/重新武装。
+    // 行已不存在或已不再到期（被重新武装）→ 只关通知，不动库。
+    own::Reminder cur; bool actionable = false;
+    if (m_store) {
+        for (const auto& x : m_store->remindersOfNote(m_rem.noteId))
+            if (x.id == m_rem.id) { cur = x; actionable = own::isDue(x, now); break; }
     }
+    if (hit == 0 && m_host) m_host->openOrFocusNote(m_note.id);   // 打开
+    if (actionable) {
+        if (hit == 1) m_store->updateReminder(own::resolveReminderSnooze(cur, now, 10));  // 贪睡
+        else          m_store->updateReminder(own::resolveReminderDismiss(cur, now));     // 打开/关闭
+    }
+    closeToast();
 }
 
 void CReminderToast::closeToast() {

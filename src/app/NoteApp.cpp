@@ -109,10 +109,11 @@ BOOL CNoteApp::InitInstance() {
     // 提醒：调度器接线 + host 30s 轮询 + 启动即查一次（错过的过期提醒开机即弹）
     m_reminders.attach(m_store.get());
     m_reminders.onFire = [this](const own::Reminder& r, const own::Note& n) {
-        CReminderToast::show(r, n, m_store.get(), this, [this](int64_t rid) {
+        bool shown = CReminderToast::show(r, n, m_store.get(), this, [this](int64_t rid) {
             m_reminders.markResolved(rid);
             if (m_main) m_main->reloadList();   // ⏰ 前缀/时间随落库刷新
         });
+        if (!shown) m_reminders.markResolved(r.id);   // 建窗失败：解除占用，下轮重试
     };
     m_host.onReminderTick = [this] { m_reminders.poll((int64_t)time(nullptr)); };
     m_host.startReminderTimer();

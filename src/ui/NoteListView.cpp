@@ -119,7 +119,7 @@ void CNoteListView::onContextMenu(int row) {
     CMenu grp; grp.CreatePopupMenu();
     grp.AppendMenu(MF_STRING, 100, _T("\x65E0\x5206\x7EC4"));             // 无分组
     auto groups = m_store->allGroups();
-    for (size_t i = 0; i < groups.size(); ++i)
+    for (size_t i = 0; i < groups.size() && i < 99; ++i)
         grp.AppendMenu(MF_STRING, 200 + (UINT)i, u8ToWide(groups[i].name));
     grp.AppendMenu(MF_SEPARATOR, 0, _T(""));
     grp.AppendMenu(MF_STRING, 199, _T("\x65B0\x5EFA\x5206\x7EC4\x2026")); // 新建分组…
@@ -128,7 +128,7 @@ void CNoteListView::onContextMenu(int row) {
     // 加标签 子菜单：现有=300+i，新建=299
     CMenu tag; tag.CreatePopupMenu();
     auto tags = m_store->allTags();
-    for (size_t i = 0; i < tags.size(); ++i)
+    for (size_t i = 0; i < tags.size() && i < 99; ++i)
         tag.AppendMenu(MF_STRING, 300 + (UINT)i, u8ToWide(tags[i].name));
     if (!tags.empty()) tag.AppendMenu(MF_SEPARATOR, 0, _T(""));
     tag.AppendMenu(MF_STRING, 299, _T("\x65B0\x5EFA\x6807\x7B7E\x2026")); // 新建标签…
