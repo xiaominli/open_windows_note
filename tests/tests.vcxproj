@@ -114,6 +114,8 @@
     <ClCompile Include="test_content_layout.cpp" />
     <ClCompile Include="test_note_list_format.cpp" />
     <ClCompile Include="..\src\domain\NoteListFormat.cpp" />
+    <ClCompile Include="test_datetime_text.cpp" />
+    <ClCompile Include="..\src\domain\DateTimeText.cpp" />
     <ClCompile Include="test_hotkey.cpp" />
     <ClCompile Include="..\src\domain\Hotkey.cpp" />
     <ClCompile Include="..\src\app\AppPaths.cpp" />
