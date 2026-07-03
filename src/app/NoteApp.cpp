@@ -238,16 +238,23 @@ void CNoteApp::doImportBackup() {
     m_store.reset();
     m_db.close();
     std::string cur = own::resolveDbPathWin();
-    std::wstring wCur = u8ToW(cur), wSrc = u8ToW(src), wBak = u8ToW(cur + ".bak");
+    std::wstring wCur = u8ToW(cur), wSrc = u8ToW(src), wBak = u8ToW(cur + ".bak"), wNew = u8ToW(cur + ".new");
     ::CopyFileW(wCur.c_str(), wBak.c_str(), FALSE);        // 现库兜底备份（失败不阻断——可能首启无库）
-    if (!::CopyFileW(wSrc.c_str(), wCur.c_str(), FALSE)) {
-        AfxMessageBox(_T("\x66FF\x6362\x6570\x636E\x5E93\x6587\x4EF6\x5931\x8D25\xFF0C\x5DF2\x4FDD\x7559\x539F\x5E93\x3002\x5E94\x7528\x5373\x5C06\x9000\x51FA\x3002"));  // 替换数据库文件失败，已保留原库。应用即将退出。
-        ::PostQuitMessage(0);                              // 库已关，无法继续运行——退出（原文件未动）
+    if (!::CopyFileW(wSrc.c_str(), wNew.c_str(), FALSE)) { // 先落到临时文件，绝不直接覆盖现库
+        AfxMessageBox(_T("\x5BFC\x5165\x5931\x8D25\xFF1A\x65E0\x6CD5\x590D\x5236\x5907\x4EFD\x6587\x4EF6\xFF0C\x539F\x5E93\x672A\x53D7\x5F71\x54CD\x3002\x5E94\x7528\x5373\x5C06\x9000\x51FA\x3002"));  // 导入失败：无法复制备份文件，原库未受影响。应用即将退出。
+        ::PostQuitMessage(0);
+        return;
+    }
+    if (!::MoveFileExW(wNew.c_str(), wCur.c_str(), MOVEFILE_REPLACE_EXISTING)) {  // 同卷 rename：要么旧库要么新库，不会截断
+        ::DeleteFileW(wNew.c_str());
+        AfxMessageBox(_T("\x66FF\x6362\x6570\x636E\x5E93\x5931\x8D25\xFF0C\x539F\x5E93\x4FDD\x6301\x4E0D\x53D8\xFF1B\x5982\x6709\x5F02\x5E38\x53EF\x7528 notes.db.bak \x6062\x590D\x3002\x5E94\x7528\x5373\x5C06\x9000\x51FA\x3002"));  // 替换数据库失败，原库保持不变；如有异常可用 notes.db.bak 恢复。应用即将退出。
+        ::PostQuitMessage(0);
         return;
     }
     if (m_singleton) { ::CloseHandle(m_singleton); m_singleton = nullptr; }   // 先释放单例锁再拉新进程
     wchar_t exe[MAX_PATH]{};
-    ::GetModuleFileNameW(nullptr, exe, MAX_PATH);
+    DWORD n = ::GetModuleFileNameW(nullptr, exe, MAX_PATH);
+    if (n == 0 || n >= MAX_PATH) { ::PostQuitMessage(0); return; }            // 路径异常：不拉起，直接退（库已替换成功）
     ::ShellExecuteW(nullptr, L"open", exe, nullptr, nullptr, SW_SHOWNORMAL);
     ::PostQuitMessage(0);
 }
