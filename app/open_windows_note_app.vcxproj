@@ -113,9 +113,12 @@
     <ClCompile Include="..\src\domain\StrokesJson.cpp" />
     <ClCompile Include="..\src\domain\NoteListFormat.cpp" />
     <ClCompile Include="..\src\domain\Hotkey.cpp" />
+    <ClCompile Include="..\src\domain\ReminderRules.cpp" />
+    <ClCompile Include="..\src\domain\DateTimeText.cpp" />
     <ClCompile Include="..\src\services\HotkeyManager.cpp" />
     <ClCompile Include="..\src\services\AutostartManager.cpp" />
     <ClCompile Include="..\src\services\TrayIcon.cpp" />
+    <ClCompile Include="..\src\services\ReminderScheduler.cpp" />
     <ClCompile Include="..\src\ui\TitleBarLayout.cpp" />
     <ClCompile Include="..\src\ui\ResizeMath.cpp" />
     <ClCompile Include="..\src\ui\ChecklistLayout.cpp" />
@@ -159,6 +162,9 @@
     <ClInclude Include="..\src\ui\NoteListView.h" />
     <ClInclude Include="..\src\ui\SearchBox.h" />
     <ClInclude Include="..\src\ui\TextPrompt.h" />
+    <ClInclude Include="..\src\domain\ReminderRules.h" />
+    <ClInclude Include="..\src\domain\DateTimeText.h" />
+    <ClInclude Include="..\src\services\ReminderScheduler.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
