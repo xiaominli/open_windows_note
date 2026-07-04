@@ -2,6 +2,7 @@
 #include "ui/MonitorEnum.h"
 #include "ui/ContentLayout.h"
 #include "ui/ContentViewFactory.h"
+#include "ui/TextPrompt.h"
 #include "domain/Geometry.h"
 #include "domain/NoteListFormat.h"
 #include "data/NoteStore.h"
@@ -34,6 +35,13 @@ static std::wstring u8ToWideStr(const std::string& s) {
     if (n > 0) ::MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), &w[0], n);
     return w;
 }
+static std::string wideToU8Str(const CString& w) {
+    if (w.IsEmpty()) return std::string();
+    int n = ::WideCharToMultiByte(CP_UTF8, 0, w, w.GetLength(), nullptr, 0, nullptr, nullptr);
+    std::string s(n > 0 ? n : 0, '\0');
+    if (n > 0) ::WideCharToMultiByte(CP_UTF8, 0, w, w.GetLength(), &s[0], n, nullptr, nullptr);
+    return s;
+}
 
 BEGIN_MESSAGE_MAP(CNoteWindow, CWnd)
     ON_WM_PAINT()
@@ -46,6 +54,7 @@ BEGIN_MESSAGE_MAP(CNoteWindow, CWnd)
     ON_WM_SIZE()
     ON_WM_TIMER()
     ON_WM_DESTROY()
+    ON_WM_LBUTTONDBLCLK()
 END_MESSAGE_MAP()
 
 bool CNoteWindow::Create(const own::Note& note, own::NoteStore* store) {
@@ -153,20 +162,20 @@ void CNoteWindow::OnPaint() {
                 g.FillEllipse(&dot2, b.x + 4, b.y + 4, b.w - 8, b.h - 8);
             }
         }
-        // 标题栏左侧显示便签标题（空内容回落 #id），不浪费拖动区
+        // 标题栏:展开只显自定义标题（空则留空,纯拖动区）;卷起回落 首行 → (无标题)
         {
-            std::string t = own::noteTitleText(m_note);
-            if (m_note.plainText.empty() && m_note.title.empty())
-                t = "#" + std::to_string(m_note.id);
-            std::wstring wt = u8ToWideStr(t);
-            FontFamily tf(L"微软雅黑"); Font tfont(&tf, 12, FontStyleRegular, UnitPixel);
-            SolidBrush tb(Color(255, 0x40, 0x40, 0x40));
-            StringFormat sf; sf.SetTrimming(StringTrimmingEllipsisCharacter);
-            sf.SetFormatFlags(StringFormatFlagsNoWrap);
-            sf.SetLineAlignment(StringAlignmentCenter);
-            RectF tr((REAL)(L.dragArea.x + 8), (REAL)L.dragArea.y,
-                     (REAL)(L.dragArea.w - 10), (REAL)L.dragArea.h);
-            g.DrawString(wt.c_str(), (int)wt.size(), &tfont, tr, &sf, &tb);
+            std::string t = own::noteWindowTitleText(m_note, m_note.rolledUp);
+            if (!t.empty()) {
+                std::wstring wt = u8ToWideStr(t);
+                FontFamily tf(L"微软雅黑"); Font tfont(&tf, 12, FontStyleRegular, UnitPixel);
+                SolidBrush tb(Color(255, 0x40, 0x40, 0x40));
+                StringFormat sf; sf.SetTrimming(StringTrimmingEllipsisCharacter);
+                sf.SetFormatFlags(StringFormatFlagsNoWrap);
+                sf.SetLineAlignment(StringAlignmentCenter);
+                RectF tr((REAL)(L.dragArea.x + 8), (REAL)L.dragArea.y,
+                         (REAL)(L.dragArea.w - 10), (REAL)L.dragArea.h);
+                g.DrawString(wt.c_str(), (int)wt.size(), &tfont, tr, &sf, &tb);
+            }
         }
         // 占位内容（卷起时不画；有内容视图时由子控件自绘）
         if (!m_note.rolledUp && !m_content) {
@@ -278,6 +287,15 @@ void CNoteWindow::OnLButtonDown(UINT, CPoint pt) {
         }
         default: break;
     }
+}
+void CNoteWindow::OnLButtonDblClk(UINT, CPoint pt) {
+    // 双击标题栏拖动区 → 重命名;预填现有标题,清空确认 = 清除自定义标题
+    if (own::hitTestTitleBar(layout(), pt.x, pt.y) != own::TitleHit::Drag) return;
+    CString io(u8ToWideStr(m_note.title).c_str());
+    if (!own_ui::promptText(this, _T("\x91CD\x547D\x540D"), io, /*allowEmpty=*/true)) return;  // 重命名
+    m_note.title = wideToU8Str(io);
+    if (m_store) m_store->updateTitle(m_note.id, m_note.title);
+    Invalidate(FALSE);
 }
 void CNoteWindow::OnMouseMove(UINT, CPoint) {
     if (m_resizing) {
