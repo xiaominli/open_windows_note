@@ -1,0 +1,26 @@
+name: ci
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - name: Build Debug
+        run: msbuild open_windows_note.sln -p:Configuration=Debug -p:Platform=x64 -m -v:m -nologo
+      - name: Run tests
+        run: x64\Debug\tests.exe
+      - name: Build Release
+        run: msbuild open_windows_note.sln -p:Configuration=Release -p:Platform=x64 -m -v:m -nologo
+      - name: Run tests (Release)
+        run: x64\Release\tests.exe
+      - name: Upload exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: open_windows_note-x64
+          path: x64/Release/open_windows_note.exe
