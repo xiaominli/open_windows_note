@@ -129,7 +129,6 @@ void CNoteWindow::OnPaint() {
             Pen sep(Color(60, 0x40, 0x40, 0x40), 1.0f);
             g.DrawLine(&sep, bar.x, bar.y + bar.h - 1, bar.x + bar.w, bar.y + bar.h - 1);
             FontFamily ff(L"微软雅黑");   // 微软雅黑
-            Font fN(&ff, 12, FontStyleRegular, UnitPixel);
             Font fB(&ff, 12, FontStyleBold, UnitPixel);
             Font fI(&ff, 12, FontStyleItalic, UnitPixel);
             Font fU(&ff, 12, FontStyleUnderline, UnitPixel);

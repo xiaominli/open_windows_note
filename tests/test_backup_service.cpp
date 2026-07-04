@@ -50,3 +50,23 @@ TEST_CASE("validateBackupFile rejects missing and junk files") {
     CHECK_FALSE(own::validateBackupFile(kTmp, &err));
     std::remove(kTmp);
 }
+TEST_CASE("validateBackupFile rejects sqlite file without notes table") {
+    std::remove(kTmp);
+    { own::Database db; std::string err;
+      REQUIRE(db.open(kTmp, &err));
+      REQUIRE(db.exec("CREATE TABLE other(x); PRAGMA user_version=1;", &err));
+      db.close(); }
+    std::string err;
+    CHECK_FALSE(own::validateBackupFile(kTmp, &err));
+    std::remove(kTmp);
+}
+TEST_CASE("validateBackupFile rejects db with user_version zero") {
+    std::remove(kTmp);
+    { own::Database db; std::string err;
+      REQUIRE(db.open(kTmp, &err));
+      REQUIRE(db.exec("CREATE TABLE notes(id INTEGER PRIMARY KEY);", &err));
+      db.close(); }
+    std::string err;
+    CHECK_FALSE(own::validateBackupFile(kTmp, &err));
+    std::remove(kTmp);
+}

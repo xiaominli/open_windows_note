@@ -14,7 +14,6 @@ class NoteStore {
 public:
     explicit NoteStore(Database& db) : db_(db) {}
     int64_t insertNote(Note n, int64_t now);
-    bool updateNote(const Note& n, int64_t now);
     bool updateGeometry(int64_t id, RectI r, const std::string& monitorId);
     bool updateFlags(int64_t id, int opacity, bool pinned, bool rolledUp, bool visible);
     bool updateContent(int64_t id, const std::vector<uint8_t>& blob, const std::string& plainText, int64_t now);
@@ -41,9 +40,9 @@ public:
     // ---- themes ----
     std::vector<Theme> allThemes();
     std::optional<Theme> getTheme(int64_t id);
-    bool updateNoteTheme(int64_t noteId, int64_t themeId);   // 只改 theme_id（updateNote 会整行覆盖 blob）
-    bool updateNoteGroup(int64_t noteId, int64_t groupId);   // 只改 group_id（updateNote 会整行覆盖 blob）
-    bool updateNoteStick(int64_t noteId, const std::string& target);   // 只改 stick_target（updateNote 会整行覆盖 blob）
+    bool updateNoteTheme(int64_t noteId, int64_t themeId);   // 只改 theme_id（(历史) 整行更新器已删除——补列请走单列更新）
+    bool updateNoteGroup(int64_t noteId, int64_t groupId);   // 只改 group_id（(历史) 整行更新器已删除——补列请走单列更新）
+    bool updateNoteStick(int64_t noteId, const std::string& target);   // 只改 stick_target（(历史) 整行更新器已删除——补列请走单列更新）
 private:
     Note readRow(class Statement& s);  // 从 SELECT * 顺序读一行
     Database& db_;

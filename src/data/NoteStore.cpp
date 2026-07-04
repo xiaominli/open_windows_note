@@ -49,24 +49,6 @@ int64_t NoteStore::insertNote(Note n, int64_t now) {
     return db_.lastInsertRowId();
 }
 
-bool NoteStore::updateNote(const Note& n, int64_t now) {
-    Statement s(db_,
-        "UPDATE notes SET type=?,title=?,content_blob=?,plain_text=?,theme_id=?,group_id=?,"
-        "pos_x=?,pos_y=?,width=?,height=?,monitor_id=?,opacity=?,pinned=?,rolled_up=?,"
-        "visible=?,stick_target=?,updated_at=? WHERE id=?;");
-    s.bind(1, (int64_t)n.type); s.bind(2, n.title);
-    s.bindBlob(3, n.contentBlob.data(), n.contentBlob.size());
-    s.bind(4, n.plainText); s.bind(5, n.themeId); s.bind(6, n.groupId);
-    s.bind(7,(int64_t)n.rect.x); s.bind(8,(int64_t)n.rect.y);
-    s.bind(9,(int64_t)n.rect.w); s.bind(10,(int64_t)n.rect.h);
-    s.bind(11, n.monitorId); s.bind(12,(int64_t)n.opacity);
-    s.bind(13,(int64_t)(n.pinned?1:0)); s.bind(14,(int64_t)(n.rolledUp?1:0));
-    s.bind(15,(int64_t)(n.visible?1:0)); s.bind(16, n.stickTarget);
-    s.bind(17, now); s.bind(18, n.id);
-    s.execDone();
-    return true;
-}
-
 bool NoteStore::updateGeometry(int64_t id, RectI r, const std::string& monitorId) {
     Statement s(db_, "UPDATE notes SET pos_x=?,pos_y=?,width=?,height=?,monitor_id=? WHERE id=?;");
     s.bind(1,(int64_t)r.x); s.bind(2,(int64_t)r.y); s.bind(3,(int64_t)r.w);

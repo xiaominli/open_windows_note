@@ -21,9 +21,8 @@ DWORD CALLBACK streamOutCb(DWORD_PTR cookie, LPBYTE src, LONG cb, LONG* pcb) {
     return 0;
 }
 // RichEdit 不设置字体时用系统默认（System 点阵字体），中文渲染发虚。
-// scope = SCF_DEFAULT（新输入）或 SCF_ALL（整篇统一字体族；不动字号/颜色/加粗——用户格式保真）。
 static int s_defaultFontTwips = 200;                 // 10pt；SetDefaultFontPt 更新
-// scope=SCF_DEFAULT 时含字号；SCF_ALL（整篇归一）只统一字体族，保住用户改过的字号
+// scope = SCF_DEFAULT（新输入）或 SCF_ALL（整篇统一字体族；不动字号/颜色/加粗——用户格式保真）。
 static void applyNoteFont(CRichEditCtrl& edit, WPARAM scope) {
     CHARFORMAT2W cf{};
     cf.cbSize = sizeof(cf);

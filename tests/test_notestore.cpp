@@ -36,14 +36,15 @@ TEST_CASE("insert then get roundtrips all fields") {
     CHECK(static_cast<int>(got->type) == static_cast<int>(own::NoteType::Checklist));
 }
 
-TEST_CASE("update refreshes updated_at only") {
+TEST_CASE("updateContent refreshes content and updated_at only") {
     auto db = freshDb(); own::NoteStore store(db);
     own::Note n; n.title = "a";
     int64_t id = store.insertNote(n, 1000);
-    auto got = store.getNote(id); got->title = "b";
-    REQUIRE(store.updateNote(*got, 2000));
+    REQUIRE(store.updateContent(id, {1,2}, "hello", 2000));
     auto g2 = store.getNote(id);
-    CHECK(g2->title == "b");
+    CHECK(g2->plainText == "hello");
+    REQUIRE(g2->contentBlob.size() == 2);
+    CHECK(g2->title == "a");             // other columns untouched
     CHECK(g2->createdAt == 1000);
     CHECK(g2->updatedAt == 2000);
 }

@@ -15,17 +15,17 @@ int hitTestFormatBar(RectI bar, FormatBarMetrics m, int count, int px, int py) {
     }
     return -1;
 }
+static const int kLadder[] = { 160, 180, 200, 220, 240, 280, 320, 360, 480 };
+static const int kLadderN = (int)(sizeof(kLadder) / sizeof(kLadder[0]));
 static int snapIdx(int twips) {                       // 不小于 twips 的最近档；超顶取顶
-    static const int ladder[] = { 160, 180, 200, 220, 240, 280, 320, 360, 480 };
-    for (int i = 0; i < 9; ++i) if (twips <= ladder[i]) return i;
-    return 8;
+    for (int i = 0; i < kLadderN; ++i) if (twips <= kLadder[i]) return i;
+    return kLadderN - 1;
 }
-int fontSizeStep(int twips, bool up) {                // 语义：先 snap 到档位，再走一步，两端夹住
-    static const int ladder[] = { 160, 180, 200, 220, 240, 280, 320, 360, 480 };
+int fontSizeStep(int twips, bool up) {                // 先 snap 后 step，两端夹住
     int idx = snapIdx(twips);
-    if (up)  { if (idx < 8) ++idx; }
+    if (up)  { if (idx < kLadderN - 1) ++idx; }
     else     { if (idx > 0) --idx; }
-    return ladder[idx];
+    return kLadder[idx];
 }
 uint32_t nextPaletteColor(uint32_t cur) {
     static const uint32_t pal[] = { 0x202020, 0xC0392B, 0x1F6FBF, 0x1E8449, 0xB7770D };
