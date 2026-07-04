@@ -63,6 +63,12 @@ bool NoteStore::updateFlags(int64_t id, int opacity, bool pinned, bool rolledUp,
     s.execDone(); return true;
 }
 
+bool NoteStore::updateTitle(int64_t id, const std::string& titleU8) {
+    Statement s(db_, "UPDATE notes SET title=? WHERE id=?;");
+    s.bind(1, titleU8); s.bind(2, id);
+    s.execDone(); return true;
+}
+
 bool NoteStore::updateContent(int64_t id, const std::vector<uint8_t>& blob,
                               const std::string& plainText, int64_t now) {
     Statement s(db_, "UPDATE notes SET content_blob=?,plain_text=?,updated_at=? WHERE id=?;");

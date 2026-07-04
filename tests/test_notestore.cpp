@@ -219,3 +219,16 @@ TEST_CASE("updateNoteStick changes only stick_target") {
     CHECK(s.updateNoteStick(id, ""));                 // clear
     CHECK(s.getNote(id)->stickTarget.empty());
 }
+
+TEST_CASE("updateTitle changes title only, keeps updated_at") {
+    auto db = freshDb(); own::NoteStore store(db);
+    own::Note n; n.plainText = "hello";
+    int64_t id = store.insertNote(n, 1000);
+    CHECK(store.updateTitle(id, "Work"));
+    auto got = store.getNote(id);
+    REQUIRE(got.has_value());
+    CHECK(got->title == "Work");
+    CHECK(got->updatedAt == 1000);          // 重命名不扰动"按更新时间排序"
+    CHECK(store.updateTitle(id, ""));       // 清空 = 恢复未设置
+    CHECK(store.getNote(id)->title == "");
+}
