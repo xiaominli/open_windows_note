@@ -183,8 +183,8 @@ void showSettingsDialog(own::Database& db, own::NoteStore& store,
         if (w.done) break;
         BOOL got = ::GetMessage(&msg, nullptr, 0, 0);
         if (got == 0) {
-            // GetMessage 返回 0（WM_QUIT）：TextPrompt.cpp 的手写循环未处理此情形，会把
-            // WM_QUIT 吞掉导致外层 CWinApp::Run 永不退出；这里补发一次，防止应用无法关闭。
+            // GetMessage 返回 0（WM_QUIT）：手写模态循环若不补发会吞掉退出消息，
+            // 外层 CWinApp::Run 将永不退出；补发一次再退出本循环（TextPrompt.cpp 同款处理）。
             ::PostQuitMessage((int)msg.wParam);
             break;
         }
