@@ -115,6 +115,7 @@ void CNoteListView::onContextMenu(int row) {
 
     CMenu menu; menu.CreatePopupMenu();
     menu.AppendMenu(MF_STRING, 1, _T("\x6253\x5F00"));                    // 打开
+    menu.AppendMenu(MF_STRING, 4, _T("\x91CD\x547D\x540D\x2026"));       // 重命名…
     menu.AppendMenu(MF_STRING, 2, _T("\x9690\x85CF\x8BE5\x4FBF\x7B7E")); // 隐藏该便签
 
     // 改分组 子菜单：无分组=100，现有=200+i，新建=199
@@ -181,6 +182,18 @@ void CNoteListView::onContextMenu(int row) {
         reload();
     }
     else if (cmd == 3) { if (m_host) m_host->closeNoteWindow(id); m_store->deleteNote(id); reload(); }
+    else if (cmd == 4) {
+        CString io = u8ToWide(note->title);
+        if (own_ui::promptText(m_table, _T("\x91CD\x547D\x540D"), io, /*allowEmpty=*/true)) {  // 重命名
+            m_store->updateTitle(id, wideToU8(io));
+            reload();
+            // 可见窗口重建刷新标题;隐藏窗口直接销毁,下次「打开」按库里新标题重建
+            if (m_host) {
+                if (note->visible) m_host->refreshNoteWindow(id);
+                else m_host->closeNoteWindow(id);
+            }
+        }
+    }
     else if (cmd == 100) { m_store->updateNoteGroup(note->id, 0); reload(); }
     else if (cmd >= 200 && cmd < 299) {
         size_t i = (size_t)(cmd - 200);
