@@ -4,6 +4,7 @@
 #include "ui/table/SWTableScrollViewWnd.h"
 #include "ui/NoteListView.h"
 #include "ui/SearchBox.h"
+#include "ui/NewNoteBar.h"
 namespace own { class NoteStore; }
 class INoteWindowHost;
 
@@ -18,9 +19,6 @@ public:
 protected:
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnClose();
-    afx_msg void OnNewTextClicked();
-    afx_msg void OnNewChecklistClicked();
-    afx_msg void OnNewDrawingClicked();
     void PostNcDestroy() override {}   // 由 unique_ptr 拥有，禁止 MFC 默认 delete this
     DECLARE_MESSAGE_MAP()
 private:
@@ -30,5 +28,5 @@ private:
     SWTableScrollViewWnd m_table;
     CNoteListView m_list;
     CSearchBox m_search;
-    CButton m_btnNewText, m_btnNewChecklist, m_btnNewDrawing;
+    CNewNoteBar m_newBar;
 };

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -140,6 +140,7 @@
     <ClCompile Include="..\src\ui\table\SWInplaceEdit.cpp" />
     <ClCompile Include="..\src\ui\table\SWTableScrollViewWnd.cpp" />
     <ClCompile Include="..\src\ui\NoteListView.cpp" />
+    <ClCompile Include="..\src\ui\NewNoteBar.cpp" />
     <ClCompile Include="..\src\ui\SearchBox.cpp" />
     <ClCompile Include="..\src\ui\TextPrompt.cpp" />
     <ClCompile Include="..\src\ui\UiFont.cpp" />
@@ -169,6 +170,7 @@
     <ClInclude Include="..\src\ui\table\SWInplaceEdit.h" />
     <ClInclude Include="..\src\ui\table\SWTableScrollViewWnd.h" />
     <ClInclude Include="..\src\ui\NoteListView.h" />
+    <ClInclude Include="..\src\ui\NewNoteBar.h" />
     <ClInclude Include="..\src\ui\SearchBox.h" />
     <ClInclude Include="..\src\ui\TextPrompt.h" />
     <ClInclude Include="..\src\ui\UiFont.h" />
