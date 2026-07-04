@@ -43,7 +43,9 @@ bool CTextContentView::Create(CWnd* parent, const CRect& rc) {
                                parent->GetSafeHwnd(), (HMENU)(UINT_PTR)0x1001,
                                ::AfxGetInstanceHandle(), nullptr);
     if (h) {
-        m_edit.Attach(h);
+        // SubclassWindow 而非 Attach：Attach 不子类化，WM_NCDESTROY 不经 MFC，
+        // DestroyWindow 时永久句柄映射未 Detach → Debug 断言（wincore.cpp）
+        m_edit.SubclassWindow(h);
     } else if (!m_edit.Create(style, rc, parent, 0x1001)) {  // 回落 RichEdit 2.0
         return false;
     }
