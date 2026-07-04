@@ -25,6 +25,24 @@ TEST_CASE("formatRelativeTime buckets") {
     CHECK(own::formatRelativeTime(100*86400, 0) == "1970-01-01");                       // 绝对日期(UTC)
 }
 
+TEST_CASE("noteWindowTitleText: expanded shows custom title only") {
+    Note a; a.title = "Work"; a.plainText = "buy milk";
+    CHECK(own::noteWindowTitleText(a, false) == "Work");   // 展开:有标题显标题
+    CHECK(own::noteWindowTitleText(a, true)  == "Work");   // 卷起:同样优先标题
+    Note b; b.plainText = "buy milk\nline2";
+    CHECK(own::noteWindowTitleText(b, false) == "");        // 展开无标题:留空,不重复首行
+    CHECK(own::noteWindowTitleText(b, true)  == "buy milk");// 卷起:回落首行
+    Note c;
+    CHECK(own::noteWindowTitleText(c, false) == "");        // 展开全空:留空
+    CHECK(own::noteWindowTitleText(c, true)
+          == "(\xE6\x97\xA0\xE6\xA0\x87\xE9\xA2\x98)");     // 卷起全空:(无标题)
+}
+
+TEST_CASE("noteWindowTitleText rolled-up truncates like noteTitleText") {
+    Note d; d.plainText = std::string(50, 'x');             // 超 40 字节
+    CHECK(own::noteWindowTitleText(d, true) == std::string(40, 'x'));
+}
+
 TEST_CASE("sortNoteRows by updated and title") {
     Note a; a.title="b"; a.updatedAt=200;
     Note b; b.title="a"; b.updatedAt=100;

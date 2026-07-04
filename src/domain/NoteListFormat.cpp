@@ -14,6 +14,11 @@ std::string noteTitleText(const Note& n) {
     if (!n.plainText.empty()) return firstLine(n.plainText, 40);
     return "(\xE6\x97\xA0\xE6\xA0\x87\xE9\xA2\x98)";   // (无标题)
 }
+std::string noteWindowTitleText(const Note& n, bool rolledUp) {
+    if (!n.title.empty()) return n.title;
+    if (!rolledUp) return std::string();
+    return noteTitleText(n);
+}
 std::string formatRelativeTime(int64_t nowSec, int64_t thenSec) {
     int64_t d = nowSec - thenSec;
     if (d < 60) return "\xE5\x88\x9A\xE5\x88\x9A";                                  // 刚刚
