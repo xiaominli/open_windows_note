@@ -31,7 +31,7 @@
 - Consumes: 已有 `std::string noteTitleText(const Note& n)`(标题 → 首行40字节 → "(无标题)")。
 - Produces: `std::string own::noteWindowTitleText(const Note& n, bool rolledUp)` — Task 3 依赖此签名。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 在 `tests/test_note_list_format.cpp` 末尾追加:
 
@@ -55,7 +55,7 @@ TEST_CASE("noteWindowTitleText rolled-up truncates like noteTitleText") {
 }
 ```
 
-- [ ] **Step 2: 跑测试确认失败(编译错:函数未声明)**
+- [x] **Step 2: 跑测试确认失败(编译错:函数未声明)**
 
 Linux 快速循环(可选):
 ```bash
@@ -70,7 +70,7 @@ msbuild tests\tests.vcxproj /p:Configuration=Debug /p:Platform=x64 /m
 ```
 Expected: 编译失败,`noteWindowTitleText` is not a member of 'own'。
 
-- [ ] **Step 3: 最小实现**
+- [x] **Step 3: 最小实现**
 
 `src/domain/NoteListFormat.h`,在 `noteTitleText` 声明后加:
 
@@ -90,11 +90,11 @@ std::string noteWindowTitleText(const Note& n, bool rolledUp) {
 }
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 同 Step 2 命令。Expected: 全部 CHECK 通过,0 failed。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/domain/NoteListFormat.h src/domain/NoteListFormat.cpp tests/test_note_list_format.cpp
@@ -116,7 +116,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Consumes: 既有 `Statement` 绑定模式(见同文件 `updateFlags`)、测试侧 `freshDb()` 夹具。
 - Produces: `bool NoteStore::updateTitle(int64_t id, const std::string& titleU8)` — Task 3/4 依赖此签名。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 在 `tests/test_notestore.cpp` 末尾追加:
 
@@ -135,7 +135,7 @@ TEST_CASE("updateTitle changes title only, keeps updated_at") {
 }
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Windows:
 ```bat
@@ -143,7 +143,7 @@ msbuild tests\tests.vcxproj /p:Configuration=Debug /p:Platform=x64 /m
 ```
 Expected: 编译失败,'updateTitle': is not a member of 'own::NoteStore'。
 
-- [ ] **Step 3: 最小实现**
+- [x] **Step 3: 最小实现**
 
 `src/data/NoteStore.h`,`updateContent` 声明后加:
 
@@ -161,7 +161,7 @@ bool NoteStore::updateTitle(int64_t id, const std::string& titleU8) {
 }
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 ```bat
 msbuild tests\tests.vcxproj /p:Configuration=Debug /p:Platform=x64 /m
@@ -169,7 +169,7 @@ tests\x64\Debug\tests.exe
 ```
 Expected: 全绿(含既有用例)。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/data/NoteStore.h src/data/NoteStore.cpp tests/test_notestore.cpp
@@ -190,7 +190,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Consumes: Task 1 `own::noteWindowTitleText(const Note&, bool)`;Task 2 `m_store->updateTitle(int64_t, const std::string&)`;既有 `own_ui::promptText(CWnd*, const CString&, CString&, bool allowEmpty)`(`ui/TextPrompt.h`)、`u8ToWideStr`、`own::hitTestTitleBar`/`TitleHit::Drag`、窗口类已带 `CS_DBLCLKS`(NoteWindow.cpp:57)。
 - Produces: 无(终端 UI 改动)。
 
-- [ ] **Step 1: include 与 wideToU8Str 辅助**
+- [x] **Step 1: include 与 wideToU8Str 辅助**
 
 `src/ui/NoteWindow.cpp` include 区加:
 
@@ -210,7 +210,7 @@ static std::string wideToU8Str(const CString& w) {
 }
 ```
 
-- [ ] **Step 2: OnPaint 标题块改用 noteWindowTitleText**
+- [x] **Step 2: OnPaint 标题块改用 noteWindowTitleText**
 
 替换 `NoteWindow.cpp` 约 156-170 行整个标题绘制块(原 `noteTitleText` + `#id` 回落删除):
 
@@ -232,7 +232,7 @@ static std::string wideToU8Str(const CString& w) {
         }
 ```
 
-- [ ] **Step 3: 双击拖动区重命名**
+- [x] **Step 3: 双击拖动区重命名**
 
 `src/ui/NoteWindow.h` 第 28 行 `OnDestroy` 声明后加:
 
@@ -260,14 +260,14 @@ void CNoteWindow::OnLButtonDblClk(UINT, CPoint pt) {
 }
 ```
 
-- [ ] **Step 4: 编译主工程**
+- [x] **Step 4: 编译主工程**
 
 ```bat
 msbuild open_windows_note.sln /p:Configuration=Debug /p:Platform=x64 /m
 ```
 Expected: 0 error。
 
-- [ ] **Step 5: Windows 冒烟**
+- [x] **Step 5: Windows 冒烟**
 
 1. 新建文本便签,输入两行文字 → 标题栏**空白**,无重复首行。
 2. 点卷起 → 标题栏显示首行;展开 → 恢复空白。
@@ -276,7 +276,7 @@ Expected: 0 error。
 5. 双击按钮区(×/图钉等)不弹重命名;双击正文编辑区不受影响。
 6. 重启应用 → 标题持久。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/ui/NoteWindow.h src/ui/NoteWindow.cpp
@@ -296,7 +296,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Consumes: Task 2 `m_store->updateTitle`;既有 `own_ui::promptText`、`u8ToWide`/`wideToU8`(同文件 18/25 行)、`INoteWindowHost::refreshNoteWindow` / `closeNoteWindow`。
 - Produces: 无(终端 UI 改动)。
 
-- [ ] **Step 1: 菜单项**
+- [x] **Step 1: 菜单项**
 
 `NoteListView.cpp` 「打开」(117 行)与「隐藏该便签」之间插入:
 
@@ -304,7 +304,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
     menu.AppendMenu(MF_STRING, 4, _T("\x91CD\x547D\x540D\x2026"));       // 重命名…
 ```
 
-- [ ] **Step 2: 命令处理**
+- [x] **Step 2: 命令处理**
 
 `cmd == 3`(删除)分支之后插入:
 
@@ -323,7 +323,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
     }
 ```
 
-- [ ] **Step 3: 编译 + 全量测试**
+- [x] **Step 3: 编译 + 全量测试**
 
 ```bat
 msbuild open_windows_note.sln /p:Configuration=Debug /p:Platform=x64 /m
@@ -332,14 +332,14 @@ tests\x64\Debug\tests.exe
 ```
 Expected: 0 error,tests 全绿。
 
-- [ ] **Step 4: Windows 冒烟**
+- [x] **Step 4: Windows 冒烟**
 
 1. 列表右键便签 → 「重命名…」预填当前标题,改名后列表标题列立即更新。
 2. 该便签窗口若开着 → 标题栏同步显示新标题。
 3. 对**隐藏中**的便签重命名 → 便签不会被意外弹出;之后「打开」显示新标题。
 4. 列表按标题排序仍正常;按更新时间排序的位置**不因重命名变动**。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/ui/NoteListView.cpp
