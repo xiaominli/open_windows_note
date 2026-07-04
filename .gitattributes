@@ -1,0 +1,8 @@
+# 仓库内统一存 LF,检出按平台/类型转换,消除 CRLF/LF 造成的"全文件已修改"假象
+* text=auto
+
+# VS 工程文件与 Windows 批处理:检出固定 CRLF
+*.sln     text eol=crlf
+*.vcxproj text eol=crlf
+*.rc      text eol=crlf
+*.cmd     text eol=crlf
