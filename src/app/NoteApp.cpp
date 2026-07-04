@@ -186,6 +186,7 @@ CNoteWindow* CNoteApp::findNote(int64_t id) {
 void CNoteApp::openOrFocusNote(int64_t id) {
     if (CNoteWindow* w = findNote(id)) {
         w->ShowWindow(SW_SHOW);
+        w->clearStickyMute();            // 显式打开：恢复贴窗参与
         w->SetWindowPos(&CWnd::wndTopMost, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
         return;
     }
@@ -223,7 +224,7 @@ void CNoteApp::applyStickyVisibility(const std::string& titleU8, const std::stri
 }
 void CNoteApp::stickyInitialPass() {
     HWND fg = ::GetForegroundWindow();
-    if (!fg) return;
+    if (!fg) { applyStickyVisibility("", ""); return; }   // 无前台窗：贴窗便签先藏
     DWORD pid = 0; ::GetWindowThreadProcessId(fg, &pid);
     if (pid == ::GetCurrentProcessId()) { applyStickyVisibility("", ""); return; }  // 自家前台：贴窗先藏
     wchar_t title[256]{}; int tl = ::GetWindowTextW(fg, title, 256);

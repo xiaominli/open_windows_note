@@ -12,9 +12,9 @@ static std::string wToU8(const wchar_t* w, int len) {
 
 bool StickyWindowWatcher::start() {
     if (m_hook) return true;
-    s_inst = this;
     m_hook = ::SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND,
                                nullptr, proc, 0, 0, WINEVENT_OUTOFCONTEXT);
+    if (m_hook) s_inst = this;           // 钩上才登记：s_inst 非空 <=> 钩子在
     return m_hook != nullptr;   // 失败=优雅降级：贴窗不工作，其余功能不受影响
 }
 void StickyWindowWatcher::stop() {

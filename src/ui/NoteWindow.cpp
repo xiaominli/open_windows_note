@@ -227,6 +227,7 @@ void CNoteWindow::OnLButtonDown(UINT, CPoint pt) {
             flushContent();          // 隐藏前存一次
             ShowWindow(SW_HIDE);
             m_note.visible = false;
+            if (!m_note.stickTarget.empty()) m_stickyMuted = true;   // × 后不被贴窗唤回
             if (m_store) m_store->updateFlags(m_note.id, m_note.opacity, m_note.pinned, m_note.rolledUp, false);
             return;
         }
@@ -343,6 +344,7 @@ void CNoteWindow::OnDestroy() {
 }
 void CNoteWindow::setStickyVisible(bool show) {
     if (!GetSafeHwnd()) return;
+    if (show && m_stickyMuted) return;   // 用户已 × 关：保持隐藏
     if (!!IsWindowVisible() == show) return;
     ShowWindow(show ? SW_SHOWNOACTIVATE : SW_HIDE);
 }

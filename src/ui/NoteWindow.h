@@ -14,6 +14,7 @@ public:
     void flushNow() { flushContent(); }   // 导出备份前确保最新内容落盘
     const std::string& stickTarget() const { return m_note.stickTarget; }
     void setStickyVisible(bool show);    // 贴窗瞬态显隐：不写 visible 标志、不落库
+    void clearStickyMute() { m_stickyMuted = false; }   // 列表「打开」等显式打开时解除
 protected:
     afx_msg void OnPaint();
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
@@ -46,4 +47,5 @@ private:
     std::unique_ptr<INoteContentView> m_content;
     own::Theme m_theme;          // 当前生效主题（含回落默认）
     void loadTheme();            // 按 m_note.themeId 取色，取不到回落内置黄
+    bool m_stickyMuted = false;   // 贴窗便签被 × 关闭后静音：前台匹配不再唤回
 };
