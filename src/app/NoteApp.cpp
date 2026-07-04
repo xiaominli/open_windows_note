@@ -106,6 +106,10 @@ BOOL CNoteApp::InitInstance() {
     // 管理器窗口：列出全部便签、搜索、右键操作
     m_main = std::make_unique<CMainFrame>();
     m_main->Create(m_store.get(), this);
+    // 工具栏新建按钮复用热键回调（含默认主题/透明度与列表刷新）
+    m_main->onNewText = m_host.onNewNote;
+    m_main->onNewChecklist = m_host.onNewChecklist;
+    m_main->onNewDrawing = m_host.onNewDrawing;
     m_main->ShowWindow(SW_SHOW);
     m_host.onToggleManager = [this]{ if (m_main) m_main->ToggleShow(); };
     m_host.onSetAllVisible = [this](bool show){ setAllNotesVisible(show); if (m_main) m_main->reloadList(); };
